@@ -1,15 +1,17 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react'; // Importado useState
 import Image from 'next/image';
 import mascote from '@/assets/mascote_01.png';
-import logo from '@/assets/LOGO Stock.io.png'
+import logo from '@/assets/LOGO Stock.io.png';
 import {
   ShoppingCart,
+  User,
   Menu,
   Search,
   ArrowRight,
   ChevronDown,
+  ChevronUp, // Importado ChevronUp
   ShoppingBag,
   HeartPulse,
   Wine,
@@ -26,7 +28,7 @@ import type { Icon as LucideIcon } from 'lucide-react';
 
 interface Category {
   name: string;
-  icon: typeof LucideIcon; 
+  icon: typeof LucideIcon;
   color: string;
 }
 
@@ -55,7 +57,7 @@ interface ProductRowProps {
   title: string;
   tag: string;
   products: Product[];
-  tagColor?: TagColor; 
+  tagColor?: TagColor;
 }
 
 const categories: Category[] = [
@@ -174,7 +176,7 @@ const CategoryList = () => (
 );
 
 const ProductCard = ({ product }: ProductCardProps) => (
-  <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md">
+  <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full">
     <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
       <img
         src={product.imageUrl}
@@ -210,7 +212,6 @@ const ProductCard = ({ product }: ProductCardProps) => (
 );
 
 const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowProps) => {
-  // Mapeamento de cores
   const colors: Record<TagColor, string> = {
     purple: 'bg-purple-100 text-purple-800',
     green: 'bg-green-100 text-green-800',
@@ -234,12 +235,68 @@ const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowPro
           <ArrowRight className="h-4 w-4" />
         </a>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      
+      <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <div key={product.id} className="w-60 flex-shrink-0">
+            <ProductCard product={product} />
+          </div>
         ))}
       </div>
     </section>
+  );
+};
+
+const FilterMenu = ({ categories }: { categories: Category[] }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center gap-1"
+      >
+        filtros
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-72 origin-top-right rounded-lg bg-white shadow-lg border border-gray-100 z-10">
+          <div className="w-full flex justify-between items-center p-4 text-purple-600">
+            <span className="font-semibold text-xl">filtros</span>
+            <button onClick={() => setIsOpen(false)}>
+              <ChevronUp className="h-6 w-6" />
+            </button>
+          </div>
+          <div className="px-4 pb-4 pt-0 space-y-3">
+            {categories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <label
+                  key={category.name}
+                  htmlFor={`filter-store-${category.name}`}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-purple-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    id={`filter-store-${category.name}`}
+                    className="h-6 w-6 rounded-lg border-gray-300 text-purple-600 focus:ring-purple-500"
+                    style={{ accentColor: '#7C3AED' }}
+                  />
+                  <Icon className="h-5 w-5 text-gray-600" /> 
+                  <span className="text-gray-800 text-lg">
+                    {category.name}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -248,16 +305,16 @@ const StoreList = () => (
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-2xl font-semibold text-gray-900">Lojas</h3>
       <div className="flex gap-4">
-        <button className="text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center gap-1">
-          filtros
-          <ChevronDown className="h-4 w-4" />
-        </button>
+
+        <FilterMenu categories={categories} />
+        
         <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
           ver mais
           <ArrowRight className="h-4 w-4" />
         </a>
       </div>
     </div>
+
     <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
       {stores.map((store) => (
         <a

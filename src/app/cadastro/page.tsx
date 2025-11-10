@@ -1,9 +1,59 @@
+"use client"
+
+import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import mascote from '@/assets/mascote.png'
 import logo from '@/assets/logo.svg'
 
 const TelaDeCadastro = () => {
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setError(null)
+
+        const form = e.currentTarget
+        const fd = new FormData(form)
+        const nome = (fd.get('nome') as string) || ''
+        const username = (fd.get('username') as string) || ''
+        const email = (fd.get('email') as string) || ''
+        const senha = (fd.get('senha') as string) || ''
+        const confirmarSenha = (fd.get('confirmarSenha') as string) || ''
+
+        if (senha !== confirmarSenha) {
+            setError('As senhas não conferem')
+            return
+        }
+
+        setLoading(true)
+        try {
+            const res = await fetch(`${API_URL}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, nome, email, password: senha }),
+            })
+
+            if (!res.ok) {
+                const text = await res.text()
+                throw new Error(text || `Erro ${res.status}`)
+            }
+
+            // sucesso: redireciona para login
+            router.push('/login')
+        } catch (err: unknown) {
+            // Mostra mensagem útil para o usuário
+            const message = err instanceof Error ? err.message : String(err)
+            setError(message || 'Erro ao criar conta')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <main className='flex flex-row justify-around items-end bg-[#F6F3E4] w-screen h-screen'>
             <div className='bg-[#171918] w-[654px] h-[90%] rotate-0 opacity-100 rounded-t-[48px]'>
@@ -12,7 +62,7 @@ const TelaDeCadastro = () => {
                         CRIE SUA CONTA
                     </h1>
 
-                    <form to='/api/cadastro' className='flex flex-col gap-[15px] text-[#858585]'>
+                    <form onSubmit={handleSubmit} className='flex flex-col gap-[15px] text-[#858585]'>
                         <input
                             type='text'
                             name='nome'
@@ -53,11 +103,14 @@ const TelaDeCadastro = () => {
                             required
                         />
 
+                        {error && <div className='text-red-400 text-sm mt-2'>{error}</div>}
+
                         <button
                             type='submit'
-                            className='w-full h-[52px] mt-[42px] bg-[rgba(106,56,243,1)] text-[rgba(255,255,255,1)] rounded-[76px] font-[600] text-[25.38px] leading-[100%] tracking-[0] font-[League_Spartan]'
+                            disabled={loading}
+                            className='w-full h-[52px] mt-[42px] bg-[rgba(106,56,243,1)] text-[rgba(255,255,255,1)] rounded-[76px] font-[600] text-[25.38px] leading-[100%] tracking-[0] font-[League_Spartan] disabled:opacity-60'
                         >
-                            CRIAR CONTA
+                            {loading ? 'Criando...' : 'CRIAR CONTA'}
                         </button>
                     </form>
 
@@ -67,7 +120,7 @@ const TelaDeCadastro = () => {
                             href='/login'
                             className='font-[League_Spartan] font-medium text-[25.38px] leading-[100%] tracking-[0] text-[rgba(106,56,243,1)]'
                         >
-                            Link
+                            Fazer Login
                         </Link>
                     </p>
                 </div>
@@ -83,6 +136,6 @@ const TelaDeCadastro = () => {
             </div>
         </main>
     )
-};
+}
 
-export default TelaDeCadastro;
+export default TelaDeCadastro

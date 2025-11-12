@@ -1,33 +1,86 @@
+// src/app/login/page.tsx
+'use client'
 
-export default function Login() {
-    return (
-        <main className="h-screen flex">
-            <div className="w-1/2 flex items-center justify-center bg-white">
-                <img src="/mascote.png" alt="Mascote Stock.io" className="h-200" />
-            </div>
-            <div className="w-1/2 flex flex-col justify-center items-center bg-black">
-                <h1 className="text-white text-2xl font-bold mb-6">BEM VINDO DE VOLTA!</h1>
-                <form className="flex flex-col w-2/3">
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        className="mb-5 p-5 rounded"
-                    />
-                    <input
-                        type="password"
-                        placeholder="Senha"
-                        className="mb-5 p-5 rounded"
-                    />
-                    <a href="#" className="text-white-400 text-xs mb-4">Esqueceu sua senha?</a>
-                    <button
-                        type="submit"
-                        className="bg-purple-700 hover:bg-purple-800 text-white rounded p-2 mb-2"
-                    >
-                        ENTRAR
-                    </button>
-                    <span className="text-white text-sm">Não possui uma conta? <a href="#" className="text-purple-500">Cadastre-se</a></span>
-                </form>
-            </div>
-        </main>
-    );
+import { useState, FormEvent } from 'react'
+import { useAuth } from '@/contexts/AuthContext' // Importe o hook
+import Link from 'next/link'
+
+const TelaDeLogin = () => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const { login } = useAuth() // Use a função login do contexto
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    try {
+      const response = await fetch('http://localhost:4000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.message || 'Credenciais inválidas.')
+      } else {
+        // Sucesso! Use a função login do contexto
+        // Ela cuidará de salvar o token, o usuário e redirecionar
+        login(data.access_token, data.user)
+      }
+    } catch (err) {
+      setError('Não foi possível conectar ao servidor.')
+    }
+  }
+
+  return (
+    <main className='flex justify-center items-center bg-[#F6F3E4] w-screen h-screen'>
+      <div className='bg-[#171918] w-[654px] p-[75px] rounded-[48px]'>
+        <h1 className='font-[League_Spartan] font-extrabold text-[44px] text-center text-white mb-10'>
+          LOGIN
+        </h1>
+        <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+          <input
+            type='email'
+            placeholder='Email'
+            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            type='password'
+            placeholder='Senha'
+            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          {error && <p className='text-red-500 text-center'>{error}</p>}
+
+          <button
+            type='submit'
+            className='w-full h-[52px] mt-8 bg-[rgba(106,56,243,1)] text-white rounded-[76px] font-[600] text-[25.38px] font-[League_Spartan]'
+          >
+            ENTRAR
+          </button>
+        </form>
+        <p className='text-center text-white font-[League_Spartan] font-light text-[25.38px] mt-6'>
+          Não tem uma conta?
+          <Link
+            href='/cadastro'
+            className='font-medium text-[rgba(106,56,243,1)]'
+          >
+            {' '}Cadastre-se
+          </Link>
+        </p>
+      </div>
+    </main>
+  )
 }
+
+export default TelaDeLogin

@@ -35,13 +35,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedToken) {
       setToken(storedToken)
       // Aqui, o ideal seria validar o token com a API
-      // Por simplicidade do MVP, vamos assumir que o token é válido
+      // Por simplicidade do PT, vamos assumir que o token é válido
       // e buscar/setar o usuário.
-
-      // Exemplo se você armazenou o usuário:
-      // if (storedUser) {
-      //     setUser(JSON.parse(storedUser));
-      // }
     }
     setIsLoading(false) // Termina a checagem
   }, [])
@@ -50,16 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(newToken)
     setUser(newUser)
     localStorage.setItem('token', newToken)
-    // localStorage.setItem('user', JSON.stringify(newUser)) // Opcional
-    router.push('/') // Redireciona para a home
+    router.push('/')
   }
 
   const logout = () => {
     setToken(null)
     setUser(null)
     localStorage.removeItem('token')
-    // localStorage.removeItem('user') // Opcional
-    router.push('/login') // Redireciona para o login
+    router.push('/login')
   }
 
   return (

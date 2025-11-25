@@ -1,5 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Store, ChevronLeft, Star } from 'lucide-react'; // You might need to install: npm install lucide-react
+import Header from '@/components/Header';
+
 
 const product = {
   id: 1,
@@ -16,8 +18,9 @@ const product = {
 
 export default function ProductPage() {
   return (
-    <div className="min-h-screen bg-[#F6F3E4] "> {/* Cream background color from image */}
+    <div className="min-h-screen bg-[#F6F3E4] ">
 
+      <Header />
 
       <main className="container mx-auto px-4 py-8">
 

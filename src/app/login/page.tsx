@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 'use client'
 
 import { useState, FormEvent } from 'react'
@@ -14,7 +13,7 @@ const TelaDeLogin = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-
+https://github.com/ianp3r/Frontend-Grupo4-Trainee-CJR-2025.2/pull/7/conflict?name=src%252Fapp%252Fcadastro%252Fpage.tsx&ancestor_oid=a086cd756ef817e12f795a36676cdc8aa0943112&base_oid=578d6ccb3ae78a3a462ba061de7dfe5c020151f0&head_oid=b689f4938da996b0e8a552e7897d333fe65f9399
     try {
       const response = await fetch('http://localhost:4000/auth/login', {
         method: 'POST',
@@ -27,8 +26,7 @@ const TelaDeLogin = () => {
       if (!response.ok) {
         setError(data.message || 'Credenciais inválidas.')
       } else {
-        // Sucesso! Use a função login do contexto
-        // Ela cuidará de salvar o token, o usuário e redirecionar
+        // Usa a função login do contexto 
         login(data.access_token, data.user)
       }
     } catch (err) {

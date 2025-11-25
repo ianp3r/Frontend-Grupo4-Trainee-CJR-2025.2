@@ -1,161 +1,143 @@
-'use client'
+"use client"
 
+import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import mascote from '@/assets/mascote.png'
 import logo from '@/assets/logo.svg'
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation' // Para redirecionar
 
 const TelaDeCadastro = () => {
-  const [nome, setNome] = useState('')
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [confirmarSenha, setConfirmarSenha] = useState('')
-  const [error, setError] = useState<string | null>(null) // Para mostrar erros
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
-  const router = useRouter() // Hook de redirecionamento
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setError(null)
 
-  // Função para lidar com o envio do formulário
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault() // Impede o recarregamento da página
-    setError(null) // Limpa erros anteriores
+        const form = e.currentTarget
+        const fd = new FormData(form)
+        const nome = (fd.get('nome') as string) || ''
+        const username = (fd.get('username') as string) || ''
+        const email = (fd.get('email') as string) || ''
+        const senha = (fd.get('senha') as string) || ''
+        const confirmarSenha = (fd.get('confirmarSenha') as string) || ''
 
-    if (senha !== confirmarSenha) {
-      setError('As senhas não conferem.')
-      return
+        if (senha !== confirmarSenha) {
+            setError('As senhas não conferem')
+            return
+        }
+
+        setLoading(true)
+        try {
+            const res = await fetch(`${API_URL}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, nome, email, password: senha }),
+            })
+
+            if (!res.ok) {
+                const text = await res.text()
+                throw new Error(text || `Erro ${res.status}`)
+            }
+
+            // sucesso: redireciona para login
+            router.push('/login')
+        } catch (err: unknown) {
+            // Mostra mensagem útil para o usuário
+            const message = err instanceof Error ? err.message : String(err)
+            setError(message || 'Erro ao criar conta')
+        } finally {
+            setLoading(false)
+        }
     }
 
-    // Enviar dados para a API
-    try {
-      const response = await fetch('http://localhost:4000/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nome,
-          username,
-          email,
-          password: senha, // O backend espera 'password'
-        }),
-      })
+    return (
+        <main className='flex flex-row justify-around items-end bg-[#F6F3E4] w-screen h-screen'>
+            <div className='bg-[#171918] w-[654px] h-[90%] rotate-0 opacity-100 rounded-t-[48px]'>
+                <div className='m-[75px] mt-[112px]'>
+                    <h1 className='font-[League_Spartan] font-extrabold text-[44px] leading-[100%] tracking-[0%] text-center mb-[10%]'>
+                        CRIE SUA CONTA
+                    </h1>
 
-      const data = await response.json()
+                    <form onSubmit={handleSubmit} className='flex flex-col gap-[15px] text-[#858585]'>
+                        <input
+                            type='text'
+                            name='nome'
+                            placeholder='Nome Completo'
+                            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+                            required
+                        />
 
-      if (!response.ok) {
-        // Se a API retornar um erro
-        setError(data.message || 'Falha ao registrar.')
-      } else {
-        localStorage.setItem('token', data.access_token)
+                        <input
+                            type='text'
+                            name='username'
+                            placeholder='Username'
+                            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+                            required
+                        />
 
-        router.push('/')
-      }
-    } catch (err) {
-      setError('Não foi possível conectar ao servidor. Tente novamente mais tarde.')
-    }
-  }
+                        <input
+                            type='email'
+                            name='email'
+                            placeholder='Email'
+                            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+                            required
+                        />
 
-  return (
-    <main className='flex flex-row justify-around items-end bg-[#F6F3E4] w-screen h-screen'>
-      <div className='bg-[#171918] w-[654px] h-[90%] rotate-0 opacity-100 rounded-t-[48px]'>
-        <div className='m-[75px] mt-[112px]'>
-          <h1 className='font-[League_Spartan] font-extrabold text-[44px] leading-[100%] tracking-[0%] text-center mb-[10%]'>
-            CRIE SUA CONTA
-          </h1>
+                        <input
+                            type='password'
+                            name='senha'
+                            placeholder='Senha'
+                            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+                            required
+                        />
 
-          {/* Formulário atualizado com onSubmit e inputs controlados */}
-          <form
-            onSubmit={handleSubmit}
-            className='flex flex-col gap-[15px] text-[#858585]'
-          >
-            <input
-              type='text'
-              name='nome'
-              placeholder='Nome Completo'
-              className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
-              required
-              value={nome} // Adicionar value
-              onChange={(e) => setNome(e.target.value)}
-            />
+                        <input
+                            type='password'
+                            name='confirmarSenha'
+                            placeholder='Confirmar Senha'
+                            className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
+                            required
+                        />
 
-            <input
-              type='text'
-              name='username'
-              placeholder='Username'
-              className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
-              required
-              value={username} // Adicionar value
-              onChange={(e) => setUsername(e.target.value)}
-            />
+                        {error && <div className='text-red-400 text-sm mt-2'>{error}</div>}
 
-            <input
-              type='email'
-              name='email'
-              placeholder='Email'
-              className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
-              required
-              value={email} // Adicionar value
-              onChange={(e) => setEmail(e.target.value)}
-            />
+                        <button
+                            type='submit'
+                            disabled={loading}
+                            className='w-full h-[52px] mt-[42px] bg-[rgba(106,56,243,1)] text-[rgba(255,255,255,1)] rounded-[76px] font-[600] text-[25.38px] leading-[100%] tracking-[0] font-[League_Spartan] disabled:opacity-60'
+                        >
+                            {loading ? 'Criando...' : 'CRIAR CONTA'}
+                        </button>
+                    </form>
 
-            <input
-              type='password'
-              name='senha'
-              placeholder='Senha'
-              className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
-              required
-              value={senha} // Adicionar value
-              onChange={(e) => setSenha(e.target.value)}
-            />
+                    <p className='text-left text-white font-[League_Spartan] font-light text-[25.38px] leading-[100%] mt-[30px]'>
+                        Já possui uma conta?  
+                        <Link
+                            href='/login'
+                            className='font-[League_Spartan] font-medium text-[25.38px] leading-[100%] tracking-[0] text-[rgba(106,56,243,1)]'
+                        >
+                            Fazer Login
+                        </Link>
+                    </p>
+                </div>
+            </div>
 
-            <input
-              type='password'
-              name='confirmarSenha'
-              placeholder='Confirmar Senha'
-              className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
-              required
-              value={confirmarSenha} // Adicionar value
-              onChange={(e) => setConfirmarSenha(e.target.value)}
-            />
-
-            {/* Exibir mensagem de erro, se houver */}
-            {error && (
-              <p className='text-red-500 text-center'>{error}</p>
-            )}
-
-            <button
-              type='submit'
-              className='w-full h-[52px] mt-[42px] bg-[rgba(106,56,243,1)] text-[rgba(255,255,255,1)] rounded-[76px] font-[600] text-[25.38px] leading-[100%] tracking-[0] font-[League_Spartan]'
-            >
-              CRIAR CONTA
-            </button>
-          </form>
-
-          <p className='text-left text-white font-[League_Spartan] font-light text-[25.38px] leading-[100%] mt-[30px]'>
-            Já possui uma conta?
-            <Link
-              href='/login'
-              className='font-[League_Spartan] font-medium text-[25.38px] leading-[100%] tracking-[0] text-[rgba(106,56,243,1)]'
-            >
-              {/* O texto original estava 'Link', mudei para ' Login' para mais clareza */}
-              {' '}Login
-            </Link>
-          </p>
-        </div>
-      </div>
-
-      <div className='w-[654px] h-[100%] flex flex-col items-center'>
-        <Image src={logo} alt='logo' />
-        <Image
-          src={mascote}
-          alt='logo'
-          className='w-[496px] object-cover object-top overflow-hidden'
-        />
-      </div>
-    </main>
-  )
+            <div className='w-[654px] h-[100%] flex flex-col items-center'>
+                <Image src={logo} alt='logo' />
+                <Image
+                    src={mascote}
+                    alt='logo'
+                    className='w-[496px] object-cover object-top overflow-hidden'
+                    />
+            </div>
+        </main>
+    )
 }
 
 export default TelaDeCadastro

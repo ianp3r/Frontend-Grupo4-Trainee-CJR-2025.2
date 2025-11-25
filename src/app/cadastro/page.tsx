@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import mascote from '@/assets/mascote.png'
 import logo from '@/assets/logo.svg'
+import { useState, FormEvent } from 'react'
+import { useRouter } from 'next/navigation' // Para redirecionar
 
 const TelaDeCadastro = () => {
     const router = useRouter()

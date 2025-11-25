@@ -1,16 +1,13 @@
-// Adicione no topo para torná-lo um Client Component
 'use client'
 
 import Image from 'next/image'
 import Link from 'next/link'
 import mascote from '@/assets/mascote.png'
 import logo from '@/assets/logo.svg'
-// Imports adicionados
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation' // Para redirecionar
 
 const TelaDeCadastro = () => {
-  // Hooks para gerenciar o estado do formulário
   const [nome, setNome] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -25,13 +22,12 @@ const TelaDeCadastro = () => {
     e.preventDefault() // Impede o recarregamento da página
     setError(null) // Limpa erros anteriores
 
-    // 1. Validação de senha
     if (senha !== confirmarSenha) {
       setError('As senhas não conferem.')
       return
     }
 
-    // 2. Enviar dados para a API
+    // Enviar dados para a API
     try {
       const response = await fetch('http://localhost:4000/auth/register', {
         method: 'POST',
@@ -48,19 +44,13 @@ const TelaDeCadastro = () => {
 
       const data = await response.json()
 
-      // 3. Lidar com a Resposta
       if (!response.ok) {
-        // Se a API retornar um erro (ex: 409 Conflict)
+        // Se a API retornar um erro
         setError(data.message || 'Falha ao registrar.')
       } else {
-        // 4. Sucesso! Armazenar o token e redirecionar
         localStorage.setItem('token', data.access_token)
 
-        // Opcional: armazenar dados do usuário também
-        // localStorage.setItem('user', JSON.stringify(data.user))
-
-        // Redirecionar para a página principal ou dashboard
-        router.push('/') // Mude '/' para sua rota principal pós-login
+        router.push('/')
       }
     } catch (err) {
       setError('Não foi possível conectar ao servidor. Tente novamente mais tarde.')
@@ -77,7 +67,7 @@ const TelaDeCadastro = () => {
 
           {/* Formulário atualizado com onSubmit e inputs controlados */}
           <form
-            onSubmit={handleSubmit} // Mudar 'to' para 'onSubmit'
+            onSubmit={handleSubmit}
             className='flex flex-col gap-[15px] text-[#858585]'
           >
             <input
@@ -87,7 +77,7 @@ const TelaDeCadastro = () => {
               className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
               required
               value={nome} // Adicionar value
-              onChange={(e) => setNome(e.target.value)} // Adicionar onChange
+              onChange={(e) => setNome(e.target.value)}
             />
 
             <input
@@ -97,7 +87,7 @@ const TelaDeCadastro = () => {
               className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
               required
               value={username} // Adicionar value
-              onChange={(e) => setUsername(e.target.value)} // Adicionar onChange
+              onChange={(e) => setUsername(e.target.value)}
             />
 
             <input
@@ -107,7 +97,7 @@ const TelaDeCadastro = () => {
               className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
               required
               value={email} // Adicionar value
-              onChange={(e) => setEmail(e.target.value)} // Adicionar onChange
+              onChange={(e) => setEmail(e.target.value)}
             />
 
             <input
@@ -117,7 +107,7 @@ const TelaDeCadastro = () => {
               className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
               required
               value={senha} // Adicionar value
-              onChange={(e) => setSenha(e.target.value)} // Adicionar onChange
+              onChange={(e) => setSenha(e.target.value)}
             />
 
             <input
@@ -127,7 +117,7 @@ const TelaDeCadastro = () => {
               className='h-12 w-full rounded-[72px] bg-[rgba(246,243,228,1)] px-6 text-[#858585] border-none outline-none'
               required
               value={confirmarSenha} // Adicionar value
-              onChange={(e) => setConfirmarSenha(e.target.value)} // Adicionar onChange
+              onChange={(e) => setConfirmarSenha(e.target.value)}
             />
 
             {/* Exibir mensagem de erro, se houver */}

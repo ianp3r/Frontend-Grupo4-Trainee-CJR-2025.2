@@ -1,5 +1,4 @@
-import React from 'react';
-import { ShoppingBag, Store, ChevronLeft, Star } from 'lucide-react'; // You might need to install: npm install lucide-react
+import { ChevronLeft, Star } from 'lucide-react';
 import Header from '@/components/Header';
 
 
@@ -13,53 +12,49 @@ const product = {
   reviews: 15,
   stock: 3,
   store: "mercado",
-  image: "/path-to-your-purple-brownie.png", // Replace with actual image path
+  image: "@/assets/brownie"
 };
 
 export default function ProductPage() {
   return (
-    <div className="min-h-screen bg-[#F6F3E4] ">
+    <div className="min-h-screen bg-cream">
 
       <Header />
 
       <main className="container mx-auto px-4 py-8">
 
-        {/* Back Button */}
-        <button className="mb-6 hover:bg-gray-200 p-2 rounded-full transition">
-          <ChevronLeft className="w-8 h-8" />
-        </button>
 
-        {/* --- 2. MAIN PRODUCT GRID --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white p-6 rounded-3xl shadow-sm">
+        {/* --- MAIN CONTENT ---        */}
+        <div className="flex flex-col lg:flex-row justify-center items-start gap-8 p-6 rounded-3xl">
 
-          {/* LEFT COLUMN: IMAGES (Occupies 7/12 of width on large screens) */}
-          <div className="lg:col-span-7 flex gap-4">
+          {/* LEFT COLUMN: IMAGES*/}
+          <div className="flex flex-col-reverse lg:flex-row gap-4 items-start shrink-0">
+
             {/* Thumbnails Strip */}
-            <div className="flex flex-col gap-4">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="w-20 h-20 border rounded-lg overflow-hidden cursor-pointer hover:border-purple-500">
-                  {/* Placeholder for thumbnail */}
-                  <div className="w-full h-full bg-purple-100" />
+            <div className="flex flex-row lg:flex-col gap-4 overflow-x-auto lg:overflow-visible w-full lg:w-auto justify-center lg:justify-start">
+              {[1, 2, 3, 4].map((item) => (
+                <div
+                  key={item}
+                  className="w-20 h-20 lg:w-24 lg:h-24 border rounded-[20px] overflow-hidden cursor-pointer hover:border-purple-500 shrink-0"
+                >
+                  <div className="w-full h-full bg-white" />
                 </div>
               ))}
             </div>
 
-            {/* Main Image */}
-            <div className="flex-1 relative bg-gray-50 rounded-xl flex items-center justify-center">
-              {/* The 'CJR' badge */}
+            {/* Main Image Container */}
+            <div className="flex-1 relative bg-gray-50 rounded-[30px] flex items-center justify-center w-full aspect-square lg:w-[432px] lg:h-[432px] lg:flex-none">
               <div className="absolute top-4 right-4 bg-blue-900 text-white rounded-full w-10 h-10 flex items-center justify-center text-xs font-bold">
                 CJR
               </div>
-              {/* Replace div below with <Image /> from next/image */}
-              <div className="w-64 h-80 bg-purple-600 rounded-md shadow-xl flex items-center justify-center text-white">
-                Product Image Here
+              <div className="w-3/4 h-3/4 bg-purple-600 rounded-md shadow-xl flex items-center justify-center text-white text-2xl font-bold">
+                Product Image
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: INFO (Occupies 5/12 of width) */}
-          <div className="lg:col-span-5 space-y-6 font-sans">
-
+          {/* RIGHT COLUMN: INFO*/}
+          <div className="w-full lg:max-w-lg space-y-6 font-sans">
             <div>
               <h1 className="text-3xl font-medium text-black mb-2">{product.name}</h1>
 
@@ -75,12 +70,11 @@ export default function ProductPage() {
               </div>
             </div>
 
-            <div className="text-4xl font-medium text-gray-900">
+            <div className="text-4xl font-medium mt-2! text-gray-900">
               R${product.price.toFixed(2).replace('.', ',')}
             </div>
 
-            {/* Description Box */}
-            <div className="bg-[#FDFBF4] p-4 rounded-lg text-sm text-gray-700 leading-relaxed">
+            <div className="text-sm text-gray-700 leading-relaxed">
               <h3 className="font-bold uppercase text-gray-500 text-xs mb-2">Descrição</h3>
               <p className="font-bold mb-2">BROWNIE MEIO AMARGO 80g</p>
               <p className="mb-4">{product.description}</p>
@@ -100,15 +94,14 @@ export default function ProductPage() {
 
         {/* --- 3. RELATED PRODUCTS (Da mesma loja) --- */}
         <div className="mt-12">
-          <h2 className="text-2xl font-medium mb-6">Da mesma loja</h2>
+          <h2 className="text-4xl font-medium mb-6 text-black font-[League_Spartan] ">Da mesma loja</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {/* Simple Card Component */}
             {[1, 2, 3, 4].map((item) => (
               <div key={item} className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition">
                 <div className="h-40 bg-gray-100 rounded-xl mb-4 relative">
-                  <div className="absolute top-2 right-2 bg-blue-900 text-white text-[10px] p-1 rounded-full">CJR</div>
                 </div>
-                <p className="font-bold">Brownie Trad...</p>
+                <p className="font-bold text-lg text-black font-[League_Spartan]">Brownie Trad...</p>
               </div>
             ))}
           </div>

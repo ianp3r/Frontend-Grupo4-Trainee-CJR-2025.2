@@ -95,8 +95,8 @@ const Header = () => (
   <header className="bg-black text-white p-4">
     <div className="container mx-auto flex justify-between items-center max-w-7xl">
       <div className='w-[654px] h-[100%] flex flex-col'>
-            <Image src={logo} alt='logo' />
-          </div>
+        <Image src={logo} alt='logo' />
+      </div>
       <nav className="flex items-center gap-6">
         <button className="relative" aria-label="Carrinho">
           <ShoppingCart className="h-6 w-6" />
@@ -145,7 +145,7 @@ const SearchBar = () => (
         type="text"
         placeholder="Procurar por..."
         className="w-full p-4 pl-12 rounded-lg bg-gray-100 border border-gray-200 text-gray-900 placeholder:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600"
-        />
+      />
       <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-black" />
     </div>
   </div>
@@ -236,7 +236,7 @@ const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowPro
           <ArrowRight className="h-4 w-4" />
         </a>
       </div>
-      
+
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
         {products.map((product) => (
           <div key={product.id} className="w-60 flex-shrink-0">
@@ -287,7 +287,7 @@ const FilterMenu = ({ categories }: { categories: Category[] }) => {
                     className="h-6 w-6 rounded-lg border-gray-300 text-purple-600 focus:ring-purple-500"
                     style={{ accentColor: '#7C3AED' }}
                   />
-                  <Icon className="h-5 w-5 text-gray-600" /> 
+                  <Icon className="h-5 w-5 text-gray-600" />
                   <span className="text-gray-800 text-lg">
                     {category.name}
                   </span>
@@ -308,7 +308,7 @@ const StoreList = () => (
       <div className="flex gap-4">
 
         <FilterMenu categories={categories} />
-        
+
         <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
           ver mais
           <ArrowRight className="h-4 w-4" />
@@ -350,7 +350,7 @@ export default function Page() {
         <Hero />
         <SearchBar />
         <CategoryList />
-        
+
         <div className="py-6 space-y-8">
           <ProductRow
             title="Produtos"
@@ -374,7 +374,7 @@ export default function Page() {
 
         <StoreList />
       </main>
-      
+
       <footer className="bg-purple-800 text-purple-300 p-8 mt-12">
         <div className="container mx-auto max-w-7xl text-center">
           <p>&copy; {new Date().getFullYear()} Grupo 4 Ciclopes</p>

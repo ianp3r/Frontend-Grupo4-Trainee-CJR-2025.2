@@ -1,385 +1,233 @@
 "use client";
 
-import React, { useState } from 'react'; // Importado useState
-import Image from 'next/image';
-import mascote from '@/assets/mascote_01.png';
-import logo from '@/assets/LOGO Stock.io.png';
-import {
-  ShoppingCart,
-  User,
-  Menu,
-  Search,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp, // Importado ChevronUp
-  ShoppingBag,
-  HeartPulse,
-  Wine,
-  Shirt,
-  Laptop,
-  Gamepad2,
-  ToyBrick,
-  Home,
-  XCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import Image from "next/image";
+import { ArrowLeft, Star } from "lucide-react";
+import logo_small from "@/assets/logo_small.svg";
+import bag from "@/assets/bag.svg";
+import store from "@/assets/store.svg";
+import person_active from "@/assets/person_active.svg";
+import profilePicture from "@/assets/profile_picture.svg";
+import mascote from "@/assets/mascote.png";
 
-import type { Icon as LucideIcon } from 'lucide-react';
-
-interface Category {
-  name: string;
-  icon: typeof LucideIcon;
-  color: string;
-}
-
-interface Product {
-  id: number;
-  name: string;
-  price: string;
-  available: boolean;
-  imageUrl: string;
-}
-
-interface Store {
-  id: number;
-  name: string;
-  type: string;
-  logo: string;
-}
-
-interface ProductCardProps {
-  product: Product;
-}
-
-type TagColor = 'purple' | 'green' | 'pink';
-
-interface ProductRowProps {
-  title: string;
-  tag: string;
-  products: Product[];
-  tagColor?: TagColor;
-}
-
-const categories: Category[] = [
-  { name: 'Mercado', icon: ShoppingBag, color: 'text-green-600' },
-  { name: 'Farmácia', icon: HeartPulse, color: 'text-blue-600' },
-  { name: 'Bebidas', icon: Wine, color: 'text-yellow-600' },
-  { name: 'Moda', icon: Shirt, color: 'text-pink-600' },
-  { name: 'Eletrônicos', icon: Laptop, color: 'text-indigo-600' },
-  { name: 'Jogos', icon: Gamepad2, color: 'text-red-600' },
-  { name: 'Brinquedos', icon: ToyBrick, color: 'text-purple-600' },
-  { name: 'Casa', icon: Home, color: 'text-orange-600' },
-];
-
-const marketProducts: Product[] = [
-  { id: 1, name: 'Brownie Meio A.', price: 'R$6,70', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Brownie' },
-  { id: 2, name: 'Redbull Trad.', price: 'R$5,41', available: false, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Redbull' },
-];
-
-const beautyProducts: Product[] = [
-  { id: 6, name: 'Limpador Facial', price: 'R$79,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Produto' },
-  { id: 7, name: 'Blush', price: 'R$199,99', available: false, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Produto' },
-];
-
-const fashionProducts: Product[] = [
-  { id: 11, name: 'Saia', price: 'R$379,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Moda' },
-  { id: 12, name: 'New Balance', price: 'R$399,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Moda' },
-];
-
-const stores: Store[] = [
-  { id: 1, name: 'CJR', type: ' mercado', logo: 'CJR' },
-  { id: 2, name: 'Rare Beauty', type: ' beleza', logo: 'RB' },
-];
-
-const Header = () => (
-  <header className="bg-black text-white p-4">
-    <div className="container mx-auto flex justify-between items-center max-w-7xl">
-      <div className='w-[654px] h-[100%] flex flex-col'>
-            <Image src={logo} alt='logo' />
-          </div>
-      <nav className="flex items-center gap-6">
-        <button className="relative" aria-label="Carrinho">
-          <ShoppingCart className="h-6 w-6" />
-          <span className="absolute -top-2 -right-2 h-4 w-4 bg-purple-600 rounded-full text-xs flex items-center justify-center">
-            0
-          </span>
-        </button>
-        <button aria-label="Perfil">
-          <User className="h-6 w-6" />
-        </button>
-        <button aria-label="Menu">
-          <Menu className="h-6 w-6" />
-        </button>
-      </nav>
-    </div>
-  </header>
-);
-
-const Hero = () => (
-  <section className="bg-black text-white">
-    <div className="container mx-auto flex flex-col md:flex-row justify-between items-center p-8 md:p-12 max-w-7xl">
-      <div className="md:w-1/2 mb-8 md:mb-0">
-        <h2 className="text-4xl md:text-5xl font-bold max-w-md leading-tight">
-          Do CAOS à organização, em alguns cliques
-        </h2>
-      </div>
-      <div className="md:w-1/2 flex justify-center items-center">
-        <div className="relative w-[496px] h-[300px] rounded-lg overflow-hidden">
-          <Image
-            src={mascote}
-            alt="Mascote"
-            fill
-            className="object-cover object-top"
-            priority
-          />
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-const SearchBar = () => (
-  <div className="container mx-auto p-4 max-w-7xl">
-    <div className="relative">
-      <input
-        type="text"
-        placeholder="Procurar por..."
-        className="w-full p-4 pl-12 rounded-lg bg-gray-100 border border-gray-200 text-gray-900 placeholder:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600"
-        />
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-black" />
-    </div>
-  </div>
-);
-
-const CategoryList = () => (
-  <section className="container mx-auto p-4 max-w-7xl">
-    <h3 className="text-2xl font-semibold mb-4 text-gray-900">Categoria</h3>
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-      {categories.map((category) => {
-        const Icon = category.icon;
-        return (
-          <a
-            key={category.name}
-            href="#"
-            className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
-          >
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
-              <Icon className={`h-8 w-8 ${category.color}`} />
-            </div>
-            <span className="text-sm font-medium text-gray-700 text-center">
-              {category.name}
-            </span>
-          </a>
-        );
-      })}
-    </div>
-  </section>
-);
-
-const ProductCard = ({ product }: ProductCardProps) => (
-  <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full">
-    <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
-      <img
-        src={product.imageUrl}
-        alt={product.name}
-        className="w-full h-full object-cover"
-        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { // Tipagem do evento
-          (e.currentTarget as HTMLImageElement).style.display = 'none';
-          const placeholder = document.createElement('div');
-          placeholder.className = 'w-full h-40 bg-gray-100 flex items-center justify-center';
-          placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-gray-300"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
-          if (e.currentTarget.parentElement) {
-            e.currentTarget.parentElement.appendChild(placeholder);
-          }
-        }}
-      />
-    </div>
-    <div className="p-3">
-      <h4 className="font-semibold text-sm text-gray-800 truncate">{product.name}</h4>
-      <p className="font-bold text-gray-900 mt-1">{product.price}</p>
-      {product.available ? (
-        <span className="flex items-center text-xs text-green-600 mt-2">
-          <CheckCircle2 className="h-3 w-3 mr-1" />
-          DISPONÍVEL
-        </span>
-      ) : (
-        <span className="flex items-center text-xs text-red-500 mt-2">
-          <XCircle className="h-3 w-3 mr-1" />
-          INDISPONÍVEL
-        </span>
-      )}
-    </div>
-  </div>
-);
-
-const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowProps) => {
-  const colors: Record<TagColor, string> = {
-    purple: 'bg-purple-100 text-purple-800',
-    green: 'bg-green-100 text-green-800',
-    pink: 'bg-pink-100 text-pink-800',
+export default function AvaliacoesDeslogadoPixelPerfect() {
+  const mainReview = {
+    name: "Sofia Figueiredo",
+    time: "1h",
+    text:
+      "Adorei o produto. Funcionou muito na minha pele. Estou muito contente e com toda certeza irei comprar mais produtos da marca. Que orgulhoooooooo! Arrasaram",
   };
-  const tagClass = colors[tagColor] || colors.purple;
+
+  const replies = [
+    {
+      id: 1,
+      name: "Maria Santos",
+      time: "1h",
+      text: "Amei muito também!",
+      avatar: profilePicture,
+      isOwner: false,
+    },
+    {
+      id: 2,
+      name: "Selena Gomez",
+      time: "1h",
+      text: "Muito obrigada pelo carinho! Nós da Rare Beauty ficamos felizes =)",
+      avatar: profilePicture,
+      isOwner: true,
+    },
+  ];
 
   return (
-    <section className="container mx-auto p-4 max-w-7xl">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <h3 className="text-2xl font-semibold text-gray-900">{title}</h3>
-          <span
-            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${tagClass}`}
-          >
-            {tag}
-          </span>
-        </div>
-        <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
-          ver mais
-          <ArrowRight className="h-4 w-4" />
-        </a>
-      </div>
-      
-      <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-        {products.map((product) => (
-          <div key={product.id} className="w-60 flex-shrink-0">
-            <ProductCard product={product} />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
-const FilterMenu = ({ categories }: { categories: Category[] }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center gap-1"
+    <div className="min-h-screen flex justify-center items-start bg-[#F6F3E4]">
+      {/* Root fixed-width canvas (pixel-perfect 1440px) */}
+      <div
+        className="relative bg-[#F6F3E4] shadow-none"
+        style={{ width: 1440, minHeight: 1024 }}
       >
-        filtros
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
-      </button>
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 origin-top-right rounded-lg bg-white shadow-lg border border-gray-100 z-10">
-          <div className="w-full flex justify-between items-center p-4 text-purple-600">
-            <span className="font-semibold text-xl">filtros</span>
-            <button onClick={() => setIsOpen(false)}>
-              <ChevronUp className="h-6 w-6" />
-            </button>
-          </div>
-          <div className="px-4 pb-4 pt-0 space-y-3">
-            {categories.map((category) => {
-              const Icon = category.icon;
-              return (
-                <label
-                  key={category.name}
-                  htmlFor={`filter-store-${category.name}`}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-purple-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    id={`filter-store-${category.name}`}
-                    className="h-6 w-6 rounded-lg border-gray-300 text-purple-600 focus:ring-purple-500"
-                    style={{ accentColor: '#7C3AED' }}
-                  />
-                  <Icon className="h-5 w-5 text-gray-600" /> 
-                  <span className="text-gray-800 text-lg">
-                    {category.name}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const StoreList = () => (
-  <section className="container mx-auto p-4 max-w-7xl">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="text-2xl font-semibold text-gray-900">Lojas</h3>
-      <div className="flex gap-4">
-
-        <FilterMenu categories={categories} />
-        
-        <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
-          ver mais
-          <ArrowRight className="h-4 w-4" />
-        </a>
-      </div>
-    </div>
-
-    <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
-      {stores.map((store) => (
-        <a
-          key={store.id}
-          href="#"
-          className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
+        {/* NAVBAR (fixed height 92px) */}
+        <header
+          className="absolute left-0 top-0"
+          style={{ width: 1440, height: 92, background: "#000" }}
         >
-          <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
-            {store.logo}
+          <div
+            style={{ width: 1440, height: 92 }}
+            className="relative px-[72px] flex items-center"
+          >
+            {/* Logo - left 5.06% of 1440 ≈ 72px (we use px padding) */}
+            <div className="absolute left-[72px] top-[25px]">
+              <Image src={logo_small} alt="Stock.io" width={220} height={42} />
+            </div>
+
+            {/* Icons and buttons on right (group positioned) */}
+            <div className="absolute right-[72px] top-[20px] flex items-center gap-[30px]">
+              <Image src={bag} alt="bag" width={36} height={36} />
+              <Image src={store} alt="store" width={38} height={38} />
+              <Image src={person_active} alt="person" width={36} height={36} />
+
+              <button className="text-white font-semibold text-[17.5815px] leading-[16px]">
+                LOGIN
+              </button>
+
+              <button className="bg-[#6A38F3] text-white font-semibold text-[17.5815px] leading-[16px] px-6 py-2 rounded-[52.64px]">
+                CADASTRE-SE
+              </button>
+            </div>
           </div>
-          <div className="text-center">
-            <span className="break-keep text-sm font-semibold text-gray-800 display-block">
-              {store.name}
-            </span>
-            <span className="break-keep text-xs text-gray-500 capitalize display-block">
-              {store.type}
-            </span>
+        </header>
+
+        {/* BLACK HERO SECTION (height 395px) */}
+        <section
+          className="absolute left-0"
+          style={{ width: 1440, height: 395, background: "#000", color: "#F6F3E4" }}
+        >
+          {/* Back button (absolute on hero) */}
+          <button
+            className="absolute"
+            style={{
+              left: 64,
+              top: 169,
+              border: "3px solid #F6F3E4",
+              borderRadius: 6,
+              padding: 6,
+              background: "transparent",
+            }}
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="w-[18px] h-[25px] text-[#F6F3E4]" />
+          </button>
+
+          {/* Avatar + name */}
+          <div
+            className="absolute flex items-center"
+            style={{ left: 114, top: 152 }}
+          >
+            <div
+              style={{
+                width: 81,
+                height: 81,
+                borderRadius: 9999,
+                overflow: "hidden",
+                background: "#D9D9D9",
+              }}
+            >
+              <Image src={profilePicture} alt="Sofia" width={81} height={81} />
+            </div>
+
+            <div style={{ marginLeft: 14 }}>
+              <h2
+                style={{
+                  fontSize: 39.3509,
+                  lineHeight: "36px",
+                  fontWeight: 400,
+                  color: "#F6F3E4",
+                }}
+              >
+                {mainReview.name}
+              </h2>
+              <div
+                style={{
+                  fontSize: 22.9422,
+                  lineHeight: "21px",
+                  fontWeight: 500,
+                  color: "rgba(246,243,228,0.84)",
+                }}
+              >
+                {mainReview.time}
+              </div>
+            </div>
           </div>
-        </a>
-      ))}
-    </div>
-  </section>
-);
 
-// --- Main Page Component ---
+          {/* Stars (right side) */}
+          <div
+            className="absolute"
+            style={{ left: 1154, top: 176, display: "flex", gap: 6 }}
+          >
+            {[...Array(5)].map((_, idx) => (
+              <Star
+                key={idx}
+                className="w-[34.57px] h-[34.57px]"
+                style={{ color: "#FFEB3A", fill: "#FFEB3A" }}
+              />
+            ))}
+          </div>
 
-export default function Page() {
-  return (
-    <div className="min-h-screen bg-[#FAF8F3]">
-      <Header />
-      <main>
-        <Hero />
-        <SearchBar />
-        <CategoryList />
-        
-        <div className="py-6 space-y-8">
-          <ProductRow
-            title="Produtos"
-            tag="em Mercado"
-            products={marketProducts}
-            tagColor="green"
-          />
-          <ProductRow
-            title="Produtos"
-            tag="em Beleza"
-            products={beautyProducts}
-            tagColor="pink"
-          />
-          <ProductRow
-            title="Produtos"
-            tag="em Moda"
-            products={fashionProducts}
-            tagColor="purple"
-          />
+          {/* Main review text */}
+          <p
+            style={{
+              position: "absolute",
+              left: 114,
+              top: 263,
+              width: 1212,
+              fontSize: 36.2088,
+              lineHeight: "33px",
+              fontWeight: 200,
+              color: "#F6F3E4",
+              textAlign: "justify",
+            }}
+          >
+            {mainReview.text}
+          </p>
+        </section>
+
+        {/* Vertical divider line for comments (positioned below hero) */}
+        <div
+          style={{
+            position: "absolute",
+            left: 134,
+            top: 506,
+            height: 154,
+            borderLeft: "1px solid #000",
+          }}
+        />
+
+        {/* COMMENTS AREA (absolute positioning per mockup) */}
+        <section style={{ position: "absolute", left: 0, top: 506, width: 1440 }}>
+          {/* First reply */}
+          <div style={{ position: "absolute", left: 194, top: 6, display: "flex", gap: 18, alignItems: "flex-start", width: 1200 }}>
+            <div style={{ width: 63.63, height: 63.63, borderRadius: 9999, overflow: "hidden" }}>
+              <Image src={profilePicture} alt="Maria" width={64} height={64} />
+            </div>
+
+            <div style={{ marginLeft: 0 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <h4 style={{ fontSize: 30.9133, lineHeight: "28px", fontWeight: 400, color: "#000" }}>Maria Santos</h4>
+                <span style={{ fontSize: 15.2321, lineHeight: "14px", color: "rgba(0,0,0,0.71)" }}>1h</span>
+              </div>
+              <p style={{ marginTop: 8, fontSize: 27.1277, lineHeight: "25px", fontWeight: 200, color: "#000", maxWidth: 1056, textAlign: "justify" }}>
+                Amei muito também!
+              </p>
+            </div>
+          </div>
+
+          {/* Second reply (owner) */}
+          <div style={{ position: "absolute", left: 194, top: 123, display: "flex", gap: 18, alignItems: "flex-start", width: 1200 }}>
+            <div style={{ width: 63.63, height: 63.63, borderRadius: 9999, overflow: "hidden" }}>
+              <Image src={profilePicture} alt="Selena" width={64} height={64} />
+            </div>
+
+            <div style={{ marginLeft: 0 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <h4 style={{ fontSize: 30.9133, lineHeight: "28px", fontWeight: 400, color: "#000" }}>Selena Gomez</h4>
+                <span style={{ fontSize: 15.2321, lineHeight: "14px", color: "rgba(0,0,0,0.71)" }}>1h</span>
+              </div>
+
+              <div style={{ marginTop: 4 }}>
+                <span style={{ fontSize: 13.0435, lineHeight: "12px", color: "#6A38F3", display: "inline-block", marginBottom: 6 }}>
+                  dona da loja
+                </span>
+              </div>
+
+              <p style={{ marginTop: 6, fontSize: 27.1277, lineHeight: "25px", fontWeight: 200, color: "#000", maxWidth: 1056, textAlign: "justify" }}>
+                Muito obrigada pelo carinho! Nós da Rare Beauty ficamos felizes =)
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Mascote bottom-right (overlapping hero area like mockup) */}
+        <div style={{ position: "absolute", right: 110, bottom: -80 }}>
+          <Image src={mascote} alt="mascote" width={280} height={280} />
         </div>
-
-        <StoreList />
-      </main>
-      
-      <footer className="bg-purple-800 text-purple-300 p-8 mt-12">
-        <div className="container mx-auto max-w-7xl text-center">
-          <p>&copy; {new Date().getFullYear()} Grupo 4 Ciclopes</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }

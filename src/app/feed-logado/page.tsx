@@ -24,6 +24,8 @@ import {
     Home,
     XCircle,
     CheckCircle2,
+    Plus,
+    Store,
 } from 'lucide-react';
 
 import type { Icon as LucideIcon } from 'lucide-react';
@@ -322,7 +324,7 @@ const FilterMenu = ({ categories }: { categories: Category[] }) => {
 const StoreList = ({ stores, loading, error }: { stores: Store[], loading: boolean, error: string | null }) => (
     <section className="container mx-auto p-4 max-w-7xl">
         <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-semibold text-gray-900">Lojas</h3>
+            <h3 className="text-2xl font-semibold text-gray-900">Minhas Lojas</h3>
             <div className="flex gap-4">
                 <FilterMenu categories={staticCategories} />
                 <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
@@ -332,8 +334,8 @@ const StoreList = ({ stores, loading, error }: { stores: Store[], loading: boole
             </div>
         </div>
 
-        {loading && <p className="text-gray-600">Carregando lojas...</p>}
-        {error && <p className="text-red-500">Erro ao carregar lojas: {error}</p>}
+        {loading && <p className="text-gray-600">Carregando suas lojas...</p>}
+        {error && <p className="text-red-500">Erro ao carregar suas lojas: {error}</p>}
         
         {!loading && !error && stores.length > 0 && (
             <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
@@ -353,6 +355,22 @@ const StoreList = ({ stores, loading, error }: { stores: Store[], loading: boole
                         </div>
                     </a>
                 ))}
+            </div>
+        )}
+        
+        {!loading && !error && stores.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="bg-gray-50 rounded-full p-6 mb-6">
+                    <Store className="h-16 w-16 text-gray-400" />
+                </div>
+                <h4 className="text-xl font-semibold text-gray-900 mb-2">Você ainda não tem loja</h4>
+                <p className="text-gray-500 text-center mb-8 max-w-md">
+                    Crie sua primeira loja e comece a vender seus produtos de forma organizada
+                </p>
+                <button className="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-sm">
+                    <Plus className="h-5 w-5" />
+                    Crie uma
+                </button>
             </div>
         )}
     </section>

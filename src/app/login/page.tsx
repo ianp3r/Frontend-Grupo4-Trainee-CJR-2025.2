@@ -18,7 +18,7 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API_URL}/users/login`, {
+            const res = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',     
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -26,21 +26,24 @@ export default function Login() {
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({ message: res.statusText }));
-                setError(err.message || 'Erro no login');
+                setError(err.message || 'Credenciais inválidas');
                 setLoading(false);
                 return;
             }
 
-            const data = await res.json().catch(() => ({}));
-            if (data?.token) {
-                localStorage.setItem('token', data.token);
+            const data = await res.json();
+            if (data?.access_token) {
+                localStorage.setItem('authToken', data.access_token);
+                localStorage.setItem('userData', JSON.stringify(data.user));
+                router.push('/feed-logado');
+            } else {
+                setError('Resposta inválida do servidor');
             }
 
             setLoading(false);
-            router.push('/');
             } catch (err: unknown) {
-                const message = err instanceof Error ? err.message : String(err);
-                setError(message ?? 'Erro de rede');
+                const message = err instanceof Error ? err.message : 'Erro de rede';
+                setError(message);
             setLoading(false);
         }
     }

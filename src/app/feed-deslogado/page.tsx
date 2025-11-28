@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from 'react'; // Importado useState
+import React, { useState, useEffect } from 'react'; // Importado useState e useEffect
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import mascote from '@/assets/mascote_01.png';
 import logo from '@/assets/LOGO Stock.io.png';
 import {
   ShoppingCart,
-  User,
-  Menu,
   Search,
   ArrowRight,
   ChevronDown,
@@ -33,18 +32,39 @@ interface Category {
 }
 
 interface Product {
-  id: number;
-  name: string;
-  price: string;
-  available: boolean;
-  imageUrl: string;
+    id: number;
+    nome: string;
+    preco: number; // in centavos
+    estoque: number;
+    imagens: { url_imagem: string; ordem: number }[];
+    loja: { id: number; nome: string };
+    categoria: { id: number; nome: string };
 }
 
-interface Store {
+// Helper interface for display
+interface ProductDisplay {
+    id: number;
+    name: string;
+    price: string;
+    available: boolean;
+    imageUrl: string;
+}interface Store {
   id: number;
   name: string;
   type: string;
   logo: string;
+}
+
+interface BackendLoja {
+  id: number;
+  nome: string;
+  descricao?: string;
+  logo_url?: string;
+  usuarioId: number;
+  banner_url?: string;
+  sticker_url?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ProductCardProps {
@@ -56,8 +76,9 @@ type TagColor = 'purple' | 'green' | 'pink';
 interface ProductRowProps {
   title: string;
   tag: string;
-  products: Product[];
+  products: ProductDisplay[];
   tagColor?: TagColor;
+  loading?: boolean;
 }
 
 const categories: Category[] = [
@@ -71,25 +92,7 @@ const categories: Category[] = [
   { name: 'Casa', icon: Home, color: 'text-orange-600' },
 ];
 
-const marketProducts: Product[] = [
-  { id: 1, name: 'Brownie Meio A.', price: 'R$6,70', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Brownie' },
-  { id: 2, name: 'Redbull Trad.', price: 'R$5,41', available: false, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Redbull' },
-];
-
-const beautyProducts: Product[] = [
-  { id: 6, name: 'Limpador Facial', price: 'R$79,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Produto' },
-  { id: 7, name: 'Blush', price: 'R$199,99', available: false, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Produto' },
-];
-
-const fashionProducts: Product[] = [
-  { id: 11, name: 'Saia', price: 'R$379,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Moda' },
-  { id: 12, name: 'New Balance', price: 'R$399,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Moda' },
-];
-
-const stores: Store[] = [
-  { id: 1, name: 'CJR', type: ' mercado', logo: 'CJR' },
-  { id: 2, name: 'Rare Beauty', type: ' beleza', logo: 'RB' },
-];
+// Products will be loaded via state management like in feed-logado
 
 const Header = () => (
   <header className="bg-black text-white p-4">
@@ -178,9 +181,11 @@ const CategoryList = () => (
 const ProductCard = ({ product }: ProductCardProps) => (
   <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full">
     <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
-      <img
+      <Image
         src={product.imageUrl}
         alt={product.name}
+        width={300}
+        height={160}
         className="w-full h-full object-cover"
         onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { // Tipagem do evento
           (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -300,7 +305,7 @@ const FilterMenu = ({ categories }: { categories: Category[] }) => {
   );
 };
 
-const StoreList = () => (
+const StoreList = ({ stores, loading, error }: { stores: Store[], loading: boolean, error: string | null }) => (
   <section className="container mx-auto p-4 max-w-7xl">
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-2xl font-semibold text-gray-900">Lojas</h3>
@@ -315,8 +320,12 @@ const StoreList = () => (
       </div>
     </div>
 
-    <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
-      {stores.map((store) => (
+    {loading && <p className="text-gray-600">Carregando lojas...</p>}
+    {error && <p className="text-red-500">Erro ao carregar lojas: {error}</p>}
+    
+    {!loading && !error && stores.length > 0 && (
+      <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
+        {stores.map((store) => (
         <a
           key={store.id}
           href="#"
@@ -329,19 +338,135 @@ const StoreList = () => (
             <span className="break-keep text-sm font-semibold text-gray-800 display-block">
               {store.name}
             </span>
-            <span className="break-keep text-xs text-gray-500 capitalize display-block">
-              {store.type}
-            </span>
           </div>
         </a>
-      ))}
-    </div>
+        ))}
+      </div>
+    )}
   </section>
 );
 
 // --- Main Page Component ---
 
 export default function Page() {
+  const router = useRouter();
+  
+  // Check if user is authenticated and redirect to feed-logado
+  useEffect(() => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (token) {
+      router.replace('/feed-logado');
+    }
+  }, [router]);
+
+  // API URL
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+  // State for Stores
+  const [stores, setStores] = useState<Store[]>([]);
+  const [storesLoading, setStoresLoading] = useState(true);
+  const [storesError, setStoresError] = useState<string | null>(null);
+
+  // State for Products (using mock data like feed-logado)
+  const [marketProducts, setMarketProducts] = useState<ProductDisplay[]>([]);
+  const [marketProductsLoading, setMarketProductsLoading] = useState(true);
+
+  const [beautyProducts, setBeautyProducts] = useState<ProductDisplay[]>([]);
+  const [beautyProductsLoading, setBeautyProductsLoading] = useState(true);
+
+  // Helper function to convert backend product to display format
+  const convertProductToDisplay = (product: Product): ProductDisplay => {
+      return {
+          id: product.id,
+          name: product.nome,
+          price: `R$${(product.preco / 100).toFixed(2).replace('.', ',')}`,
+          available: product.estoque > 0,
+          imageUrl: product.imagens?.[0]?.url_imagem || 'https://placehold.co/300x300/EFEFEF/333?text=Produto'
+      };
+  };
+
+  // Fetch stores from API
+  useEffect(() => {
+    const fetchStores = async () => {
+      setStoresLoading(true);
+      setStoresError(null);
+      try {
+        const res = await fetch(`${API_URL}/loja`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch stores: ${res.status}`);
+        }
+        const backendData: BackendLoja[] = await res.json();
+        // Map backend data to frontend interface
+        const mappedStores: Store[] = backendData.map((loja: BackendLoja) => ({
+          id: loja.id,
+          name: loja.nome,
+          type: loja.descricao || 'loja',
+          logo: loja.logo_url || loja.nome.substring(0, 2)
+        }));
+        setStores(mappedStores);
+      } catch (err: unknown) {
+        setStoresError(err instanceof Error ? err.message : 'Unknown error fetching stores');
+      } finally {
+        setStoresLoading(false);
+      }
+    };
+
+    // Fetch products from API by category
+    const fetchProductsByCategory = async (categoryId: number) => {
+        try {
+            const response = await fetch(`${API_URL}/product/categoria/${categoryId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const products: Product[] = await response.json();
+            return products.map(convertProductToDisplay);
+        } catch (error) {
+            console.error(`Error fetching products for category ${categoryId}:`, error);
+            return [];
+        }
+    };
+
+    const loadProducts = async () => {
+        // Market Products (categoria ID = 1)
+        setMarketProductsLoading(true);
+        const marketProducts = await fetchProductsByCategory(1);
+        setMarketProducts(marketProducts);
+        setMarketProductsLoading(false);
+
+        // Beauty Products (categoria ID = 2)
+        setBeautyProductsLoading(true);
+        const beautyProducts = await fetchProductsByCategory(2);
+        setBeautyProducts(beautyProducts);
+        setBeautyProductsLoading(false);
+    };
+
+    fetchStores();
+    loadProducts();
+  }, [API_URL]);
+
+  // Fashion Products state
+  const [fashionProducts, setFashionProducts] = useState<ProductDisplay[]>([]);
+  const [fashionProductsLoading, setFashionProductsLoading] = useState(true);
+
+  // Fetch Fashion Products (categoria ID = 3) 
+  useEffect(() => {
+      const fetchFashionProducts = async () => {
+          setFashionProductsLoading(true);
+          try {
+              const response = await fetch(`${API_URL}/product/categoria/3`);
+              if (response.ok) {
+                  const products: Product[] = await response.json();
+                  setFashionProducts(products.map(convertProductToDisplay));
+              }
+          } catch (error) {
+              console.error('Error fetching fashion products:', error);
+          }
+          setFashionProductsLoading(false);
+      };
+      
+      fetchFashionProducts();
+  }, [API_URL]);
+
   return (
     <div className="min-h-screen bg-[#FAF8F3]">
       <Header />
@@ -351,27 +476,43 @@ export default function Page() {
         <CategoryList />
         
         <div className="py-6 space-y-8">
-          <ProductRow
-            title="Produtos"
-            tag="em Mercado"
-            products={marketProducts}
-            tagColor="green"
-          />
-          <ProductRow
-            title="Produtos"
-            tag="em Beleza"
-            products={beautyProducts}
-            tagColor="pink"
-          />
+          {/* Market Products Row */}
+          {marketProductsLoading && <p className="text-center text-gray-600">Carregando produtos de Mercado...</p>}
+          {!marketProductsLoading && marketProducts.length > 0 && (
+            <ProductRow
+              title="Produtos"
+              tag="em Mercado"
+              products={marketProducts}
+              tagColor="green"
+            />
+          )}
+
+          {/* Beauty Products Row */}
+          {beautyProductsLoading && <p className="text-center text-gray-600">Carregando produtos de Beleza...</p>}
+          {!beautyProductsLoading && beautyProducts.length > 0 && (
+            <ProductRow
+              title="Produtos"
+              tag="em Beleza"
+              products={beautyProducts}
+              tagColor="pink"
+            />
+          )}
+
+          {/* Fashion Products Row (Real API Data) */}
           <ProductRow
             title="Produtos"
             tag="em Moda"
             products={fashionProducts}
+            loading={fashionProductsLoading}
             tagColor="purple"
           />
         </div>
 
-        <StoreList />
+        <StoreList 
+          stores={stores} 
+          loading={storesLoading} 
+          error={storesError} 
+        />
       </main>
       
       <footer className="bg-purple-800 text-purple-300 p-8 mt-12">

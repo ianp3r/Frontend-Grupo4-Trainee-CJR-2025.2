@@ -32,19 +32,28 @@ const TelaDeCadastro = () => {
 
         setLoading(true)
         try {
-            const res = await fetch(`${API_URL}/users`, {
+            const res = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, nome, email, password: senha }),
             })
 
             if (!res.ok) {
-                const text = await res.text()
-                throw new Error(text || `Erro ${res.status}`)
+                const errorData = await res.json().catch(() => ({}))
+                throw new Error(errorData.message || `Erro ${res.status}`)
             }
 
-            // sucesso: redireciona para login
-            router.push('/login')
+            const data = await res.json()
+            
+            // Registration successful - auto login the user
+            if (data?.access_token) {
+                localStorage.setItem('authToken', data.access_token)
+                localStorage.setItem('userData', JSON.stringify(data.user))
+                router.push('/feed-logado')
+            } else {
+                // No token returned, redirect to login
+                router.push('/login')
+            }
         } catch (err: unknown) {
             // Mostra mensagem útil para o usuário
             const message = err instanceof Error ? err.message : String(err)

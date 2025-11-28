@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import mascote from '@/assets/mascote_01.png';
 import logo from '@/assets/LOGO Stock.io.png';
@@ -114,9 +115,11 @@ const Header = () => (
                         0
                     </span>
                 </button>
-                <button aria-label="Perfil">
-                    <User className="h-6 w-6" />
-                </button>
+                <Link href="/perfil" aria-label="Perfil">
+                    <button className="hover:text-gray-300 transition-colors">
+                        <User className="h-6 w-6" />
+                    </button>
+                </Link>
                 <button aria-label="Menu">
                     <Menu className="h-6 w-6" />
                 </button>

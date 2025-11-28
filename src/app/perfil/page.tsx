@@ -15,18 +15,80 @@ const Perfil = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // TODO: Get the current user ID from authentication context/localStorage/session
-    const currentUserId = 3; // Using test user ID 3
+    // Helper function to decode JWT token and get user ID
+    const getCurrentUserId = (): number | null => {
+        try {
+            const token = localStorage.getItem('authToken');
+            console.log('Token found:', !!token);
+            if (!token) {
+                console.log('No auth token found in localStorage');
+                return null;
+            }
+            
+            // Decode JWT payload (simple base64 decode)
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log('Decoded token payload:', payload);
+            return payload.sub; // 'sub' contains the user ID
+        } catch (error) {
+            console.error('Error decoding token:', error);
+            return null;
+        }
+    };
+
+    const currentUserId = getCurrentUserId();
 
     useEffect(() => {
         const fetchUserData = async () => {
+            // Check if user is authenticated
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.log('No auth token found, redirecting to login');
+                setError('Usuário não autenticado - sem token');
+                setLoading(false);
+                window.location.href = '/login';
+                return;
+            }
+
+            if (!currentUserId) {
+                console.log('Could not decode user ID from token, redirecting to login');
+                setError('Usuário não autenticado - token inválido');
+                setLoading(false);
+                // Clear invalid token
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                window.location.href = '/login';
+                return;
+            }
+
             try {
                 setLoading(true);
-                const userData = await UserAPI.getUserWithStores(currentUserId);
+                console.log('Fetching user data for ID:', currentUserId);
+                
+                // Fetch user info and stores separately for now
+                const [userInfo, storesData] = await Promise.all([
+                    UserAPI.getUserById(currentUserId),
+                    UserAPI.getUserWithStores(currentUserId) // This now calls the stores endpoint
+                ]);
+                
+                // Combine the data to match expected structure
+                const userData = {
+                    ...userInfo,
+                    lojas: Array.isArray(storesData) ? storesData : []
+                };
+                
+                console.log('User data fetched successfully:', userData);
                 setUser(userData);
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'Error fetching user data');
                 console.error('Error fetching user data:', err);
+                setError(err instanceof Error ? err.message : 'Error fetching user data');
+                
+                // If it's an authentication error, clear tokens and redirect to login
+                if (err instanceof Error && (err.message.includes('Not Found') || err.message.includes('Unauthorized') || err.message.includes('401') || err.message.includes('403'))) {
+                    console.log('Authentication error, clearing tokens and redirecting to login');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userData');
+                    window.location.href = '/login';
+                }
             } finally {
                 setLoading(false);
             }

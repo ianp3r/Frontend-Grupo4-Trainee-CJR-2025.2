@@ -123,7 +123,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="text-4xl font-medium mt-2! text-gray-900">
-              R${Number(product.preco).toFixed(2).replace('.', ',')}
+              R${(product.preco / 100).toFixed(2).replace('.', ',')}
             </div>
 
             <div className="text-sm text-gray-700 leading-relaxed">

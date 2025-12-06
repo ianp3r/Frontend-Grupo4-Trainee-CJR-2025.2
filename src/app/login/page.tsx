@@ -9,12 +9,13 @@ const TelaDeLogin = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { login } = useAuth() // Use a função login do contexto
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     try {
-      const response = await fetch('http://localhost:4000/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

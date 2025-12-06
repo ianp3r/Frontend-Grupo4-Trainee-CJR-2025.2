@@ -37,14 +37,14 @@ const Header = () => {
                 </div>
 
                 {isAuthenticated ? (
-                    // Logged In 
+                    // Logged In - Show profile and logout icons
                     <ul className='flex gap-[30px] items-center'>
-                        <li className='w-[36px] h-[36px]'>
+                        <li className='w-[35px] h-[35px]'>
                             <Link href={`/perfil/${user?.username || ''}`}>
                                 <Image src={person_active} alt='perfil' className='cursor-pointer'/>
                             </Link>
                         </li>
-                        <li className='w-[36px] h-[36px]'>
+                        <li className='w-[35px] h-[35px]'>
                             <button onClick={logout} className='cursor-pointer'>
                                 <Image src={exit} alt='sair'/>
                             </button>

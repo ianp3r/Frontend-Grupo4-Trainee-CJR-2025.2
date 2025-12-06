@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Select from "@/components/Select";
+import { StoreAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import icone_loja from '@/assets/icone-loja.svg';
 import UploadBox from "./UploadBox";
 
 interface Loja {
     nome: string;
     categoria: string;
+    descricao: string;
     imagens: {
         imagem: File | null;
         imagem_svg: File | null;
@@ -17,9 +20,13 @@ interface Loja {
 
 interface Props {
     onClose: () => void;
+    onSuccess?: () => void;
 }
 
-const CriarLoja = ({ onClose }: Props) => {
+const CriarLoja = ({ onClose, onSuccess }: Props) => {
+    const { user } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const listaOpcoes = [
         'Mercado', 'Farmácia', 'Beleza',
         'Moda', 'Eletrônico', 'Jogos',
@@ -29,6 +36,7 @@ const CriarLoja = ({ onClose }: Props) => {
     const [loja, setLoja] = useState<Loja>({
         nome: '',
         categoria: '',
+        descricao: '',
         imagens: {
             imagem: null,
             imagem_svg: null,
@@ -46,15 +54,57 @@ const CriarLoja = ({ onClose }: Props) => {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        onClose();
-        console.log(loja);
+        
+        if (!user?.id) {
+            setError('Usuário não autenticado');
+            return;
+        }
+
+        if (!loja.nome.trim()) {
+            setError('O nome da loja é obrigatório');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            // TODO: Upload images to cloud storage and get URLs
+            // For now, we'll use placeholder URLs or skip them
+            const storeData = {
+                nome: loja.nome,
+                descricao: loja.descricao || undefined,
+                usuarioId: user.id,
+                // Add URLs when image upload is implemented
+                // logo_url: uploadedLogoUrl,
+                // banner_url: uploadedBannerUrl,
+                // sticker_url: uploadedStickerUrl,
+            };
+
+            await StoreAPI.createStore(storeData);
+            
+            if (onSuccess) {
+                onSuccess();
+            }
+            
+            onClose();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Erro ao criar loja');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div>
             <h1 className="text-black font-normal text-[52.56px] text-center">Adicionar loja</h1>
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center mt-4">
+                    {error}
+                </div>
+            )}
             <form
                 onSubmit={handleSubmit}
                 className="flex flex-col items-center"
@@ -68,7 +118,19 @@ const CriarLoja = ({ onClose }: Props) => {
                     onChange={(e) =>
                         setLoja(prev => ({ ...prev, nome: e.target.value }))
                     }
-                    className="w-full h-[65px] mt-[30px] rounded-[99px] bg-white font-light text-[25px] text-[#00000082] p-6 resize-none"
+                    disabled={loading}
+                    required
+                    className="w-full h-[65px] mt-[30px] rounded-[99px] bg-white font-light text-[25px] text-[#00000082] p-6 resize-none disabled:opacity-50"
+                />
+                <textarea
+                    id="descricao-loja"
+                    placeholder="Descrição da loja (opcional)"
+                    value={loja.descricao}
+                    onChange={(e) =>
+                        setLoja(prev => ({ ...prev, descricao: e.target.value }))
+                    }
+                    disabled={loading}
+                    className="w-full h-[100px] mt-[20px] rounded-[24px] bg-white font-light text-[20px] text-[#00000082] p-6 resize-none disabled:opacity-50"
                 />
                 <Select
                     opcoes={listaOpcoes}
@@ -103,9 +165,10 @@ const CriarLoja = ({ onClose }: Props) => {
                 </div>
                 <button
                     type="submit"
-                    className="w-[373px] h-[50px] rounded-[83px] mt-[30px] mb-[40px] bg-[#6A38F3] text-white text-[25px]"
+                    disabled={loading}
+                    className="w-[373px] h-[50px] rounded-[83px] mt-[30px] mb-[40px] bg-[#6A38F3] text-white text-[25px] disabled:opacity-50 hover:bg-[#5B2FE8] transition-colors"
                 >
-                    Adicionar
+                    {loading ? 'Criando...' : 'Adicionar'}
                 </button>
             </form>
         </div>

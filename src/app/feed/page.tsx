@@ -27,6 +27,23 @@ import {
 
 import type { Icon as LucideIcon } from 'lucide-react';
 
+// Helper to fetch with auth token
+const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+  const headers = {
+    ...options.headers,
+  } as Record<string, string>;
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+};
+
 interface Category {
   name: string;
   icon: typeof LucideIcon;
@@ -290,7 +307,7 @@ const StoreList = ({ categories, stores }: { categories: Category[]; stores: Sto
         {stores.map((store) => (
           <Link
             key={store.id}
-            href={`/store/${store.id}`}
+            href={`/loja?id=${store.id}`}
             className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
           >
             <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
@@ -299,9 +316,6 @@ const StoreList = ({ categories, stores }: { categories: Category[]; stores: Sto
             <div className="text-center">
               <span className="break-keep text-sm font-semibold text-gray-800 display-block">
                 {store.name}
-              </span>
-              <span className="break-keep text-xs text-gray-500 capitalize display-block">
-                {store.type}
               </span>
             </div>
           </Link>
@@ -324,8 +338,9 @@ export default function Page() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch categories
         const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+        
+        // Fetch categories
         const categoriesResponse = await fetch(`${API_URL}/categories`);
         const categoriesData = await categoriesResponse.json();
         

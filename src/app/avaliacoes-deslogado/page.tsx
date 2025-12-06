@@ -1,22 +1,15 @@
 "use client";
 
-import React from "react";
-import Image, { StaticImageData } from "next/image";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Star } from "lucide-react"; 
+import Header from "@/components/Header";
+import { ProductReviewAPI, CommentAPI } from "@/services/api";
+import { ProductReview, Comment } from "@/types";
 
-// --- IMPORTS DOS ASSETS ---
-import logo_small from "@/assets/logo_small.svg";
-import bag from "@/assets/bag.svg";
-import store from "@/assets/store.svg";
+// Default profile image
 import profilePicture from "@/assets/profile_picture.svg"; 
-
-import sofiaAvatar from "@/assets/sofia_avatar.png"; 
-import mariaAvatar from "@/assets/maria_avatar.png"; 
-
-// --- DEFINIÇÕES DE TIPAGEM E AVATARES ---
-const avatarSofia: StaticImageData = sofiaAvatar;   
-const avatarMaria: StaticImageData = mariaAvatar;   
-const avatarSelena: StaticImageData = profilePicture; 
 
 interface StarRatingProps {
   count: number;
@@ -37,54 +30,81 @@ const StarRating: React.FC<StarRatingProps> = ({ count }) => (
   </div>
 );
 
+const formatTimeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-// --- COMPONENTE PRINCIPAL (VERSÃO DESLOGADA) ---
+  if (diffMins < 60) return `${diffMins}min`;
+  if (diffHours < 24) return `${diffHours}h`;
+  return `${diffDays}d`;
+};
+
 export default function ReviewPageDeslogado() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const reviewId = searchParams.get('id');
+
+  const [review, setReview] = useState<ProductReview | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReviewData = async () => {
+      if (!reviewId) {
+        setError('ID da avaliação não fornecido');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const reviewData = await ProductReviewAPI.getReviewById(Number(reviewId));
+        setReview(reviewData);
+
+        const commentsData = await CommentAPI.getCommentsByReviewId(Number(reviewId));
+        setComments(commentsData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar avaliação');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviewData();
+  }, [reviewId]);
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-[#F6F3E4] flex items-center justify-center">
+        <Header />
+        <p className="text-2xl">Carregando avaliação...</p>
+      </div>
+    );
+  }
+
+  if (error || !review) {
+    return (
+      <div className="w-full min-h-screen bg-[#F6F3E4] flex items-center justify-center">
+        <Header />
+        <p className="text-2xl text-red-600">{error || 'Avaliação não encontrada'}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full min-h-screen bg-[#F6F3E4] overflow-x-hidden">
+      <Header />
       
-      {/* 1. NAVBAR DESLOGADA */}
-      <header className="sticky top-0 z-10 w-full h-[92px] bg-black text-white flex items-center justify-between px-[5%]">
-        
-        {/* Logo STOCK.IO */}
-        <div className="flex items-center">
-          <Image
-            src={logo_small}
-            alt="Stock.io Logo"
-            width={220}
-            height={42}
-          />
-        </div>
-
-        {/* Ícones e Botões (lado direito: Loja, Sacola, LOGIN, CADASTRE-SE) */}
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          
-          {/* Ícones */}
-          <div className="flex items-center space-x-6">
-            <Image src={store} alt="Loja" width={38} height={38} className="cursor-pointer" />
-            <Image src={bag} alt="Sacola" width={36} height={36} className="cursor-pointer" />
-          </div>
-
-          {/* LOGIN */}
-          <button className="text-white font-semibold text-[17.58px] leading-4 text-center">
-            LOGIN
-          </button>
-
-          {/* Botão CADASTRE-SE */}
-          <button className="bg-[#6A38F3] rounded-[52.64px] px-6 py-3 flex items-center justify-center text-white font-semibold text-[17.58px] leading-4">
-            CADASTRE-SE
-          </button>
-        </div>
-      </header>
-      
-      {/* 2. FAIXA PRETA DA AVALIAÇÃO PRINCIPAL */}
+      {/* FAIXA PRETA DA AVALIAÇÃO PRINCIPAL */}
       <section className="w-full min-h-[395px] bg-black text-[#F6F3E4] py-16 px-[5%]">
-        
-        {/* Container flex para o topo (Voltar, Avatar, Nome, Estrelas) */}
         <div className="flex items-start mb-8">
-          
-          {/* Setinha de voltar - */}
+          {/* Botão Voltar */}
           <button 
+            onClick={() => router.back()}
             className="mt-6 border-[3px] border-[#F6F3E4] rounded p-1 mr-8 flex items-center justify-center cursor-pointer transition duration-150 hover:bg-white/10"
           >
             <ArrowLeft className="w-6 h-6" />
@@ -92,26 +112,31 @@ export default function ReviewPageDeslogado() {
 
           {/* Avatar, Nome e Hora */}
           <div className="flex items-center flex-grow">
-            
-            {/* Avatar Sofia */}
             <div className="w-[81px] h-[81px] rounded-full overflow-hidden bg-[#D9D9D9] mr-4 flex-shrink-0">
-              <Image
-                src={avatarSofia} 
-                alt="Sofia Figueiredo"
-                width={81}
-                height={81}
-                className="object-cover w-full h-full"
-              />
+              {review.usuario?.foto_perfil_url ? (
+                <img
+                  src={review.usuario.foto_perfil_url}
+                  alt={review.usuario?.nome || 'Usuário'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={profilePicture}
+                  alt={review.usuario?.nome || 'Usuário'}
+                  width={81}
+                  height={81}
+                  className="object-cover w-full h-full"
+                />
+              )}
             </div>
             
-            {/* Nome e Hora */}
             <div>
               <div className="flex items-end space-x-3">
                 <h2 className="text-[39.35px] leading-none font-normal">
-                  Sofia Figueiredo
+                  {review.usuario?.nome || 'Usuário'}
                 </h2>
                 <span className="text-[22.94px] leading-none font-medium opacity-80 pb-1">
-                  1h
+                  {formatTimeAgo(review.createdAt)}
                 </span>
               </div>
             </div>
@@ -119,104 +144,66 @@ export default function ReviewPageDeslogado() {
           
           {/* Estrelas */}
           <div className="flex-shrink-0 mt-6">
-             <StarRating count={5} />
+            <StarRating count={review.nota} />
           </div>
         </div>
 
-        {/* Texto da avaliação principal */}
+        {/* Texto da avaliação */}
         <p className="text-[36.21px] leading-[1.2] font-extralight text-justify mx-auto max-w-[1212px]">
-          Adorei o produto. Funcionou muito na minha pele. Estou muito contente
-          e com toda certeza irei comprar mais produtos da marca. Que
-          orgulhoooooooo! Arrasaram
+          {review.comentario || 'Sem comentário'}
         </p>
       </section>
       
-      {/* 3. COMENTÁRIOS E RESPOSTAS */}
+      {/* COMENTÁRIOS E RESPOSTAS */}
       <div className="px-[5%] pt-12 pb-12"> 
-        
-        {/* Coluna de Comentários com Linha Vertical */}
         <div className="flex">
-          
-          {/* Espaço para a Linha Vertical (Vector 155) */}
+          {/* Linha Vertical */}
           <div className="relative pr-8">
             <div className="absolute left-1/2 top-0 h-full border-l border-black transform -translate-x-1/2" />
           </div>
 
-          {/* Comentários (Maria e Selena) */}
+          {/* Lista de Comentários */}
           <div className="flex flex-col space-y-12 w-full">
-            
-            {/* COMENTÁRIO MARIA */}
-            <div className="flex items-start">
-              
-              {/* Avatar Maria */}
-              <div className="w-[63.63px] h-[63.63px] rounded-full overflow-hidden bg-gray-300 mr-4 flex-shrink-0">
-                <Image
-                  src={avatarMaria}
-                  alt="Maria Santos"
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
-              </div>
+            {comments.length > 0 ? (
+              comments.map((comment) => (
+                <div key={comment.id} className="flex items-start">
+                  <div className="w-[63.63px] h-[63.63px] rounded-full overflow-hidden bg-gray-300 mr-4 flex-shrink-0">
+                    {comment.usuario?.foto_perfil_url ? (
+                      <img
+                        src={comment.usuario.foto_perfil_url}
+                        alt={comment.usuario?.nome || 'Usuário'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={profilePicture}
+                        alt={comment.usuario?.nome || 'Usuário'}
+                        width={64}
+                        height={64}
+                        className="object-cover w-full h-full"
+                      />
+                    )}
+                  </div>
 
-              {/* Detalhes do Comentário Maria */}
-              <div className="pt-2">
-                
-                {/* Nome e Hora */}
-                <div className="flex items-end space-x-2 mb-1">
-                  <h4 className="text-[30.91px] leading-none font-normal text-black">
-                    Maria Santos
-                  </h4>
-                  <span className="text-[15.23px] leading-none font-medium text-black opacity-70 pb-0.5">
-                    1h
-                  </span>
+                  <div className="pt-2">
+                    <div className="flex items-end space-x-2 mb-1">
+                      <h4 className="text-[30.91px] leading-none font-normal text-black">
+                        {comment.usuario?.nome || 'Usuário'}
+                      </h4>
+                      <span className="text-[15.23px] leading-none font-medium text-black opacity-70 pb-0.5">
+                        {formatTimeAgo(comment.createdAt)}
+                      </span>
+                    </div>
+                    
+                    <p className="text-[27.13px] leading-[1.2] font-extralight text-justify text-black">
+                      {comment.conteudo}
+                    </p>
+                  </div>
                 </div>
-                
-                {/* Texto Maria */}
-                <p className="text-[27.13px] leading-[1.2] font-extralight text-justify text-black">
-                  Amei muito também!
-                </p>
-              </div>
-            </div>
-
-            {/* COMENTÁRIO SELENA (Dona da Loja) */}
-            <div className="flex items-start">
-              
-              {/* Avatar Selena */}
-              <div className="w-[63.63px] h-[63.63px] rounded-full overflow-hidden bg-gray-300 mr-4 flex-shrink-0">
-                <Image
-                  src={avatarSelena}
-                  alt="Selena Gomez"
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-
-              {/* Detalhes do Comentário Selena */}
-              <div className="pt-2">
-                
-                {/* Nome e Hora */}
-                <div className="flex items-end space-x-2 mb-1">
-                  <h4 className="text-[30.91px] leading-none font-normal text-black">
-                    Selena Gomez
-                  </h4>
-                  <span className="text-[15.23px] leading-none font-medium text-black opacity-70 pb-0.5">
-                    1h
-                  </span>
-                </div>
-
-                {/* Dona da Loja */}
-                <span className="text-[13.04px] leading-none font-normal text-[#6A38F3] block mb-1">
-                  dona da loja
-                </span>
-                
-                {/* Texto Selena */}
-                <p className="text-[27.13px] leading-[1.2] font-extralight text-justify text-black">
-                  Muito obrigada pelo carinho! Nós da Rare Beauty ficamos felizes =)
-                </p>
-              </div>
-            </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center">Nenhum comentário ainda</p>
+            )}
           </div>
         </div>
       </div>

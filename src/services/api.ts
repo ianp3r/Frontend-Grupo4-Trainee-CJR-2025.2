@@ -22,7 +22,6 @@ export class UserAPI {
 
   static async getUserWithStores(id: number): Promise<UserWithStores> {
     const token = localStorage.getItem('authToken');
-    console.log('Making API call with token:', !!token);
     
     const response = await fetch(`${API_BASE_URL}/loja/user/${id}`, {
       method: 'GET',

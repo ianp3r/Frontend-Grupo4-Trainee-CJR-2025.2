@@ -181,7 +181,7 @@ const ProductCard = ({ product }: ProductCardProps) => (
   </Link>
 );
 
-const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowProps) => {
+const ProductRow = ({ title, tag, products, tagColor = 'purple', categoryName }: ProductRowProps & { categoryName: string }) => {
   const colors: Record<TagColor, string> = {
     purple: 'bg-purple-100 text-purple-800',
     green: 'bg-green-100 text-green-800',
@@ -200,10 +200,10 @@ const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowPro
             {tag}
           </span>
         </div>
-        <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
+        <Link href={`/categoria/${encodeURIComponent(categoryName)}`} className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
           ver mais
           <ArrowRight className="h-4 w-4" />
-        </a>
+        </Link>
       </div>
       
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
@@ -420,6 +420,7 @@ export default function Page() {
                     tag={`em ${categoryName}`}
                     products={products}
                     tagColor={tagColor}
+                    categoryName={categoryName}
                   />
                 );
               })

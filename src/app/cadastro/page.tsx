@@ -49,7 +49,7 @@ const TelaDeCadastro = () => {
             if (data?.access_token) {
                 localStorage.setItem('authToken', data.access_token)
                 localStorage.setItem('userData', JSON.stringify(data.user))
-                router.push('/feed-logado')
+                router.push('/feed')
             } else {
                 // No token returned, redirect to login
                 router.push('/login')

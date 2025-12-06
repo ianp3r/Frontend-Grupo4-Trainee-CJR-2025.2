@@ -325,7 +325,8 @@ export default function Page() {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await fetch('http://localhost:4000/categories');
+        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+        const categoriesResponse = await fetch(`${API_URL}/categories`);
         const categoriesData = await categoriesResponse.json();
         
         // Transform categories to include icons and colors (show first 8)
@@ -342,31 +343,40 @@ export default function Page() {
         
         setCategories(transformedCategories);
         
-        // Fetch products
-        const response = await fetch('http://localhost:4000/produto/by-category');
-        const data = await response.json();
+        // Fetch products from the product endpoint
+        const response = await fetch(`${API_URL}/product`);
+        const productsArray = await response.json();
         
-        // Transform the data to match our Product interface
+        // Group products by category
         const transformedData: Record<string, Product[]> = {};
         
-        Object.keys(data).forEach((categoryName) => {
-          transformedData[categoryName] = data[categoryName].map((product: any) => ({
-            id: product.id,
-            name: product.nome,
-            price: `R$${Number(product.preco).toFixed(2).replace('.', ',')}`,
-            available: product.estoque > 0,
-            imageUrl: product.imageUrl,
-          }));
-        });
+        // Ensure productsArray is an array
+        if (Array.isArray(productsArray)) {
+          productsArray.forEach((product: any) => {
+            const categoryName = product.categoria?.nome || 'Sem Categoria';
+            
+            if (!transformedData[categoryName]) {
+              transformedData[categoryName] = [];
+            }
+            
+            transformedData[categoryName].push({
+              id: product.id,
+              name: product.nome,
+              price: `R$${(product.preco / 100).toFixed(2).replace('.', ',')}`,
+              available: product.estoque > 0,
+              imageUrl: product.imagens?.[0]?.url_imagem || 'https://placehold.co/300x300/EFEFEF/333?text=Produto',
+            });
+          });
+        }
         
         setProductsByCategory(transformedData);
 
         // Fetch stores
-        const storesResponse = await fetch('http://localhost:4000/loja');
+        const storesResponse = await fetch(`${API_URL}/loja`);
         const storesData = await storesResponse.json();
         
         // Transform stores data
-        const transformedStores: Store[] = storesData.map((store: any) => ({
+        const transformedStores: Store[] = (Array.isArray(storesData) ? storesData : []).map((store: any) => ({
           id: store.id,
           name: store.nome,
           type: store.descricao || 'loja',

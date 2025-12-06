@@ -14,7 +14,7 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.replace('/feed-logado');
+      router.replace('/feed');
     }
   }, [isAuthenticated, loading, router]);
 

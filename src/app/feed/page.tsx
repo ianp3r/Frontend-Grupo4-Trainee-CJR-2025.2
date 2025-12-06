@@ -359,12 +359,18 @@ export default function Page() {
               transformedData[categoryName] = [];
             }
             
+            // Construct full image URL
+            let imageUrl = product.imagens?.[0]?.url || null;
+            if (imageUrl && !imageUrl.startsWith('http')) {
+              imageUrl = `${API_URL}${imageUrl}`;
+            }
+            
             transformedData[categoryName].push({
               id: product.id,
               name: product.nome,
               price: `R$${(product.preco / 100).toFixed(2).replace('.', ',')}`,
               available: product.estoque > 0,
-              imageUrl: product.imagens?.[0]?.url_imagem || 'https://placehold.co/300x300/EFEFEF/333?text=Produto',
+              imageUrl: imageUrl,
             });
           });
         }

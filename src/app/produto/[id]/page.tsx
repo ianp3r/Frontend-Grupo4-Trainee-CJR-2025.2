@@ -93,13 +93,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         const sameStoreProducts = Array.isArray(storeProductsData)
           ? storeProductsData
               .filter((p: any) => p.id !== product.id)
-              .map((p: any) => ({
-                id: p.id,
-                nome: p.nome,
-                preco: p.preco,
-                estoque: p.estoque,
-                imageUrl: p.imagens?.[0]?.url_imagem || null,
-              }))
+              .map((p: any) => {
+                // Construct full image URL
+                let imageUrl = p.imagens?.[0]?.url || null;
+                if (imageUrl && !imageUrl.startsWith('http')) {
+                  imageUrl = `${apiUrl}${imageUrl}`;
+                }
+                
+                return {
+                  id: p.id,
+                  nome: p.nome,
+                  preco: p.preco,
+                  estoque: p.estoque,
+                  imageUrl: imageUrl,
+                };
+              })
           : [];
 
         setStoreProducts(sameStoreProducts);

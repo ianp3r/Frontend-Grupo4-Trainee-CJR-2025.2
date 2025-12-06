@@ -53,9 +53,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     const fetchProduct = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        const res = await fetch(`${apiUrl}/produto/${resolvedParams.id}`, {
-          cache: 'no-store',
-        });
+        const res = await fetch(`${apiUrl}/produto/${resolvedParams.id}`);
 
         if (!res.ok) {
           router.push('/404');

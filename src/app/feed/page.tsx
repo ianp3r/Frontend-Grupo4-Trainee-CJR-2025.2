@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from 'react'; // Importado useState
+import React, { useState } from 'react';
 import Image from 'next/image';
 import mascote from '@/assets/mascote_01.png';
-import logo from '@/assets/LOGO Stock.io.png';
+import Header from '@/components/Header';
 import {
   ShoppingCart,
   User,
@@ -11,7 +11,7 @@ import {
   Search,
   ArrowRight,
   ChevronDown,
-  ChevronUp, // Importado ChevronUp
+  ChevronUp,
   ShoppingBag,
   HeartPulse,
   Wine,
@@ -90,29 +90,6 @@ const stores: Store[] = [
   { id: 1, name: 'CJR', type: ' mercado', logo: 'CJR' },
   { id: 2, name: 'Rare Beauty', type: ' beleza', logo: 'RB' },
 ];
-
-const Header = () => (
-  <header className="bg-black text-white p-4">
-    <div className="container mx-auto flex justify-between items-center max-w-7xl">
-      <div className='w-[654px] h-[100%] flex flex-col'>
-                <Image src={logo} alt='logo' />
-            </div>
-      <nav className="flex items-center gap-6">
-        <button className="relative" aria-label="Carrinho">
-          <ShoppingCart className="h-6 w-6" />
-          <span className="absolute -top-2 -right-2 h-4 w-4 bg-purple-600 rounded-full text-xs flex items-center justify-center">
-          </span>
-        </button>
-        <button className="text-sm font-semibold tracking-wider hover:text-gray-300">
-          LOGIN
-        </button>
-        <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm py-2 px-5 rounded-full transition-colors">
-          CADASTRE-SE
-        </button>
-      </nav>
-    </div>
-  </header>
-);
 
 const Hero = () => (
   <section className="bg-black text-white">

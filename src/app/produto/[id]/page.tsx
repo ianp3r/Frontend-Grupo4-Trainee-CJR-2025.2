@@ -1,7 +1,11 @@
-import { ChevronLeft, Star } from 'lucide-react';
+"use client";
+
+import { ChevronLeft, Star, CheckCircle2, XCircle } from 'lucide-react';
 import Header from '@/components/Header';
-import { notFound } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ProductImage {
   id: number;
@@ -10,7 +14,7 @@ interface ProductImage {
   alt_text?: string;
 }
 
-interface Product {
+interface MainProduct {
   id: number;
   lojaId: number;
   categoriaId?: number;
@@ -23,30 +27,101 @@ interface Product {
   images?: ProductImage[];
 }
 
-async function getProduct(id: string): Promise<Product | null> {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const res = await fetch(`${apiUrl}/produto/${id}`, {
-      cache: 'no-store', // Disable caching for fresh data
-    });
-
-    if (!res.ok) {
-      return null;
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return null;
-  }
+interface StoreProduct {
+  id: number;
+  nome: string;
+  preco: number;
+  estoque: number;
+  imageUrl: string | null;
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = await getProduct(id);
+export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const [product, setProduct] = useState<MainProduct | null>(null);
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [storeProductsLoading, setStoreProductsLoading] = useState(true);
+  const router = useRouter();
+  const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null);
 
-  if (!product) {
-    notFound();
+  useEffect(() => {
+    params.then(setResolvedParams);
+  }, [params]);
+
+  useEffect(() => {
+    if (!resolvedParams) return;
+
+    const fetchProduct = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const res = await fetch(`${apiUrl}/produto/${resolvedParams.id}`);
+
+        if (!res.ok) {
+          router.push('/404');
+          return;
+        }
+
+        const data = await res.json();
+        setProduct(data);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        router.push('/404');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [resolvedParams, router]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const fetchStoreProducts = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        // Use the loja query parameter to fetch products from the same store
+        const res = await fetch(`${apiUrl}/product?loja=${product.lojaId}`);
+
+        if (!res.ok) {
+          console.error('Error fetching store products');
+          return;
+        }
+
+        const storeProductsData = await res.json();
+        
+        // Filter out the current product and map to StoreProduct format
+        const sameStoreProducts = Array.isArray(storeProductsData)
+          ? storeProductsData
+              .filter((p: any) => p.id !== product.id)
+              .map((p: any) => ({
+                id: p.id,
+                nome: p.nome,
+                preco: p.preco,
+                estoque: p.estoque,
+                imageUrl: p.imagens?.[0]?.url_imagem || null,
+              }))
+          : [];
+
+        setStoreProducts(sameStoreProducts);
+      } catch (error) {
+        console.error('Error fetching store products:', error);
+      } finally {
+        setStoreProductsLoading(false);
+      }
+    };
+
+    fetchStoreProducts();
+  }, [product]);
+
+  if (loading || !product) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <p className="text-center text-gray-600">Carregando produto...</p>
+        </main>
+      </div>
+    );
   }
 
   const images = product.images || [];
@@ -70,7 +145,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             {hasImages && (
               <div className="flex flex-row lg:flex-col gap-4 overflow-x-auto lg:overflow-visible w-full lg:w-auto justify-center lg:justify-start">
                 {images.map((image) => (
-                  <div
+                   <div
                     key={image.id}
                     className="w-20 h-20 lg:w-24 lg:h-24 border rounded-[20px] overflow-hidden cursor-pointer hover:border-purple-500 shrink-0 relative"
                   >
@@ -136,19 +211,58 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* --- 3. RELATED PRODUCTS (Da mesma loja) --- */}
-        <div className="mt-12">
-          <h2 className="text-4xl font-medium mb-6 text-black font-[League_Spartan] ">Da mesma loja</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {/* Simple Card Component */}
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition">
-                <div className="h-40 bg-gray-100 rounded-xl mb-4 relative">
-                </div>
-                <p className="font-bold text-lg text-black font-[League_Spartan]">Brownie Trad...</p>
-              </div>
-            ))}
+        {!storeProductsLoading && storeProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-4xl font-medium mb-6 text-black font-[League_Spartan]">Da mesma loja</h2>
+            <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
+              {storeProducts.map((storeProduct) => (
+                <Link 
+                  key={storeProduct.id} 
+                  href={`/produto/${storeProduct.id}`}
+                  className="w-60 flex-shrink-0"
+                >
+                  <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition h-full cursor-pointer">
+                    <div className="h-40 bg-gray-100 rounded-xl mb-4 relative overflow-hidden">
+                      {storeProduct.imageUrl ? (
+                        <img
+                          src={storeProduct.imageUrl}
+                          alt={storeProduct.nome}
+                          className="w-full h-full object-cover"
+                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                            (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/300x300/EFEFEF/333?text=Produto';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-gray-300">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <p className="font-bold text-lg text-black font-[League_Spartan] mb-2 truncate">
+                      {storeProduct.nome}
+                    </p>
+                    <p className="font-bold text-gray-900 mb-2">
+                      R${(storeProduct.preco / 100).toFixed(2).replace('.', ',')}
+                    </p>
+                    {storeProduct.estoque > 0 ? (
+                      <span className="flex items-center text-xs text-green-600">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        DISPONÍVEL
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-xs text-red-500">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        INDISPONÍVEL
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </main>
     </div>

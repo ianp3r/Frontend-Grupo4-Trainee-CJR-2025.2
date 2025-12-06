@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import mascote from '@/assets/mascote_01.png';
 import Header from '@/components/Header';
 import {
@@ -37,7 +38,7 @@ interface Product {
   name: string;
   price: string;
   available: boolean;
-  imageUrl: string;
+  imageUrl: string | null;
 }
 
 interface Store {
@@ -60,36 +61,32 @@ interface ProductRowProps {
   tagColor?: TagColor;
 }
 
-const categories: Category[] = [
-  { name: 'Mercado', icon: ShoppingBag, color: 'text-green-600' },
-  { name: 'Farmácia', icon: HeartPulse, color: 'text-blue-600' },
-  { name: 'Bebidas', icon: Wine, color: 'text-yellow-600' },
-  { name: 'Moda', icon: Shirt, color: 'text-pink-600' },
-  { name: 'Eletrônicos', icon: Laptop, color: 'text-indigo-600' },
-  { name: 'Jogos', icon: Gamepad2, color: 'text-red-600' },
-  { name: 'Brinquedos', icon: ToyBrick, color: 'text-purple-600' },
-  { name: 'Casa', icon: Home, color: 'text-orange-600' },
-];
+// Helper function to get icon and color for a category
+const getCategoryIconAndColor = (categoryName: string): { icon: typeof LucideIcon; color: string } => {
+  const categoryMap: Record<string, { icon: typeof LucideIcon; color: string }> = {
+    'Mercado': { icon: ShoppingBag, color: 'text-green-600' },
+    'Farmácia': { icon: HeartPulse, color: 'text-blue-600' },
+    'Bebidas': { icon: Wine, color: 'text-yellow-600' },
+    'Moda': { icon: Shirt, color: 'text-pink-600' },
+    'Eletrônicos': { icon: Laptop, color: 'text-indigo-600' },
+    'Jogos': { icon: Gamepad2, color: 'text-red-600' },
+    'Brinquedos': { icon: ToyBrick, color: 'text-purple-600' },
+    'Casa': { icon: Home, color: 'text-orange-600' },
+  };
+  
+  return categoryMap[categoryName] || { icon: ShoppingBag, color: 'text-gray-600' };
+};
 
-const marketProducts: Product[] = [
-  { id: 1, name: 'Brownie Meio A.', price: 'R$6,70', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Brownie' },
-  { id: 2, name: 'Redbull Trad.', price: 'R$5,41', available: false, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Redbull' },
-];
-
-const beautyProducts: Product[] = [
-  { id: 6, name: 'Limpador Facial', price: 'R$79,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Produto' },
-  { id: 7, name: 'Blush', price: 'R$199,99', available: false, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Produto' },
-];
-
-const fashionProducts: Product[] = [
-  { id: 11, name: 'Saia', price: 'R$379,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Moda' },
-  { id: 12, name: 'New Balance', price: 'R$399,99', available: true, imageUrl: 'https://placehold.co/300x300/EFEFEF/333?text=Moda' },
-];
-
-const stores: Store[] = [
-  { id: 1, name: 'CJR', type: ' mercado', logo: 'CJR' },
-  { id: 2, name: 'Rare Beauty', type: ' beleza', logo: 'RB' },
-];
+const categoryTagColors: Record<string, TagColor> = {
+  'Mercado': 'green',
+  'Farmácia': 'green',
+  'Bebidas': 'purple',
+  'Moda': 'pink',
+  'Eletrônicos': 'purple',
+  'Jogos': 'purple',
+  'Brinquedos': 'pink',
+  'Casa': 'green',
+};
 
 const Hero = () => (
   <section className="bg-black text-white">
@@ -114,78 +111,74 @@ const Hero = () => (
   </section>
 );
 
-const SearchBar = () => (
-  <div className="container mx-auto p-4 max-w-7xl">
-    <div className="relative">
-      <input
-        type="text"
-        placeholder="Procurar por..."
-        className="w-full p-4 pl-12 rounded-lg bg-gray-100 border border-gray-200 text-gray-900 placeholder:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600"
-        />
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-black" />
-    </div>
-  </div>
-);
 
-const CategoryList = () => (
+const CategoryList = ({ categories }: { categories: Category[] }) => (
   <section className="container mx-auto p-4 max-w-7xl">
     <h3 className="text-2xl font-semibold mb-4 text-gray-900">Categoria</h3>
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-      {categories.map((category) => {
-        const Icon = category.icon;
-        return (
-          <a
-            key={category.name}
-            href="#"
-            className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
-          >
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
-              <Icon className={`h-8 w-8 ${category.color}`} />
-            </div>
-            <span className="text-sm font-medium text-gray-700 text-center">
-              {category.name}
-            </span>
-          </a>
-        );
-      })}
-    </div>
+    {categories.length > 0 ? (
+      <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
+        {categories.map((category) => {
+          const Icon = category.icon;
+          return (
+            <a
+              key={category.name}
+              href="#"
+              className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
+            >
+              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
+                <Icon className={`h-8 w-8 ${category.color}`} />
+              </div>
+              <span className="text-sm font-medium text-gray-700 text-center">
+                {category.name}
+              </span>
+            </a>
+          );
+        })}
+      </div>
+    ) : (
+      <p className="text-gray-500 text-sm">Nenhuma categoria disponível</p>
+    )}
   </section>
 );
 
 const ProductCard = ({ product }: ProductCardProps) => (
-  <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full">
-    <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
-      <img
-        src={product.imageUrl}
-        alt={product.name}
-        className="w-full h-full object-cover"
-        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { // Tipagem do evento
-          (e.currentTarget as HTMLImageElement).style.display = 'none';
-          const placeholder = document.createElement('div');
-          placeholder.className = 'w-full h-40 bg-gray-100 flex items-center justify-center';
-          placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-gray-300"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
-          if (e.currentTarget.parentElement) {
-            e.currentTarget.parentElement.appendChild(placeholder);
-          }
-        }}
-      />
+  <Link href={`/produto/${product.id}`} className="block h-full">
+    <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full cursor-pointer">
+      <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+              (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/300x300/EFEFEF/333?text=Produto';
+            }}
+          />
+        ) : (
+          <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-gray-300">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </div>
+        )}
+      </div>
+      <div className="p-3">
+        <h4 className="font-semibold text-sm text-gray-800 truncate">{product.name}</h4>
+        <p className="font-bold text-gray-900 mt-1">{product.price}</p>
+        {product.available ? (
+          <span className="flex items-center text-xs text-green-600 mt-2">
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            DISPONÍVEL
+          </span>
+        ) : (
+          <span className="flex items-center text-xs text-red-500 mt-2">
+            <XCircle className="h-3 w-3 mr-1" />
+            INDISPONÍVEL
+          </span>
+        )}
+      </div>
     </div>
-    <div className="p-3">
-      <h4 className="font-semibold text-sm text-gray-800 truncate">{product.name}</h4>
-      <p className="font-bold text-gray-900 mt-1">{product.price}</p>
-      {product.available ? (
-        <span className="flex items-center text-xs text-green-600 mt-2">
-          <CheckCircle2 className="h-3 w-3 mr-1" />
-          DISPONÍVEL
-        </span>
-      ) : (
-        <span className="flex items-center text-xs text-red-500 mt-2">
-          <XCircle className="h-3 w-3 mr-1" />
-          INDISPONÍVEL
-        </span>
-      )}
-    </div>
-  </div>
+  </Link>
 );
 
 const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowProps) => {
@@ -277,7 +270,7 @@ const FilterMenu = ({ categories }: { categories: Category[] }) => {
   );
 };
 
-const StoreList = () => (
+const StoreList = ({ categories, stores }: { categories: Category[]; stores: Store[] }) => (
   <section className="container mx-auto p-4 max-w-7xl">
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-2xl font-semibold text-gray-900">Lojas</h3>
@@ -292,63 +285,143 @@ const StoreList = () => (
       </div>
     </div>
 
-    <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
-      {stores.map((store) => (
-        <a
-          key={store.id}
-          href="#"
-          className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
-        >
-          <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
-            {store.logo}
-          </div>
-          <div className="text-center">
-            <span className="break-keep text-sm font-semibold text-gray-800 display-block">
-              {store.name}
-            </span>
-            <span className="break-keep text-xs text-gray-500 capitalize display-block">
-              {store.type}
-            </span>
-          </div>
-        </a>
-      ))}
-    </div>
+    {stores.length > 0 ? (
+      <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
+        {stores.map((store) => (
+          <Link
+            key={store.id}
+            href={`/store/${store.id}`}
+            className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
+          >
+            <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
+              {store.logo}
+            </div>
+            <div className="text-center">
+              <span className="break-keep text-sm font-semibold text-gray-800 display-block">
+                {store.name}
+              </span>
+              <span className="break-keep text-xs text-gray-500 capitalize display-block">
+                {store.type}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    ) : (
+      <p className="text-gray-500 text-sm">Nenhuma loja disponível</p>
+    )}
   </section>
 );
 
-// --- Main Page Component ---
+// conteudo principal
 
 export default function Page() {
+  const [productsByCategory, setProductsByCategory] = useState<Record<string, any[]>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch categories
+        const categoriesResponse = await fetch('http://localhost:4000/categories');
+        const categoriesData = await categoriesResponse.json();
+        
+        // Transform categories to include icons and colors (show first 8)
+        const transformedCategories: Category[] = categoriesData
+          .slice(0, 8)
+          .map((cat: any) => {
+            const { icon, color } = getCategoryIconAndColor(cat.nome);
+            return {
+              name: cat.nome,
+              icon,
+              color,
+            };
+          });
+        
+        setCategories(transformedCategories);
+        
+        // Fetch products
+        const response = await fetch('http://localhost:4000/produto/by-category');
+        const data = await response.json();
+        
+        // Transform the data to match our Product interface
+        const transformedData: Record<string, Product[]> = {};
+        
+        Object.keys(data).forEach((categoryName) => {
+          transformedData[categoryName] = data[categoryName].map((product: any) => ({
+            id: product.id,
+            name: product.nome,
+            price: `R$${Number(product.preco).toFixed(2).replace('.', ',')}`,
+            available: product.estoque > 0,
+            imageUrl: product.imageUrl,
+          }));
+        });
+        
+        setProductsByCategory(transformedData);
+
+        // Fetch stores
+        const storesResponse = await fetch('http://localhost:4000/loja');
+        const storesData = await storesResponse.json();
+        
+        // Transform stores data
+        const transformedStores: Store[] = storesData.map((store: any) => ({
+          id: store.id,
+          name: store.nome,
+          type: store.descricao || 'loja',
+          logo: store.nome.substring(0, 2).toUpperCase(), // Use first 2 letters as logo
+        }));
+        
+        setStores(transformedStores);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#FAF8F3]">
+    <div className="min-h-screen bg-cream">
       <Header />
       <main>
         <Hero />
-        <SearchBar />
-        <CategoryList />
+        <CategoryList categories={categories} />
         
         <div className="py-6 space-y-8">
-          <ProductRow
-            title="Produtos"
-            tag="em Mercado"
-            products={marketProducts}
-            tagColor="green"
-          />
-          <ProductRow
-            title="Produtos"
-            tag="em Beleza"
-            products={beautyProducts}
-            tagColor="pink"
-          />
-          <ProductRow
-            title="Produtos"
-            tag="em Moda"
-            products={fashionProducts}
-            tagColor="purple"
-          />
+          {loading ? (
+            <div className="container mx-auto p-4 max-w-7xl text-center">
+              <p className="text-gray-600">Carregando produtos...</p>
+            </div>
+          ) : (
+            Object.keys(productsByCategory).length > 0 ? (
+              Object.entries(productsByCategory).map(([categoryName, products]) => {
+                if (products.length === 0) return null;
+                
+                const tagColor = categoryTagColors[categoryName] || 'purple';
+                
+                return (
+                  <ProductRow
+                    key={categoryName}
+                    title="Produtos"
+                    tag={`em ${categoryName}`}
+                    products={products}
+                    tagColor={tagColor}
+                  />
+                );
+              })
+            ) : (
+              <div className="container mx-auto p-4 max-w-7xl text-center">
+                <p className="text-gray-600">Nenhum produto disponível no momento.</p>
+              </div>
+            )
+          )}
         </div>
 
-        <StoreList />
+        <StoreList categories={categories} stores={stores} />
       </main>
       
       <footer className="bg-purple-800 text-purple-300 p-8 mt-12">

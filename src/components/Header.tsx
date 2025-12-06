@@ -53,9 +53,6 @@ const Header = () => {
                 ) : (
                     // Logged Out State
                     <nav className="flex items-center gap-6">
-                        <Link href="/perfil" className="w-6 h-6" aria-label="Perfil">
-                            <Image src={person} alt='perfil' className='cursor-pointer w-6 h-6'/>
-                        </Link>
                         <Link href="/login" className="text-sm font-semibold tracking-wider hover:text-gray-300">
                             LOGIN
                         </Link>

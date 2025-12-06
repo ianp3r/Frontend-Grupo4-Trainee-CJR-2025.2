@@ -1,4 +1,4 @@
-"use-client"
+"use client"
 
 import Image from "next/image";
 import close from '@/assets/close.svg'
@@ -14,11 +14,11 @@ const Modal = ({ children, isOpen, onClose }: ModalProps) => {
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            className="fixed  w-full min-h-screen inset-0 bg-black/50 flex items-center justify-center z-50"
             onClick={onClose}
         >
             <div
-                className="flex flex-col rounded-[29px] bg-[#EDEDED] opacity-100 w-[1200px]"
+                className="flex max-h-[80%] overflow-y-auto flex-col self-center rounded-[29px] bg-[#EDEDED] opacity-100 w-[1200px]"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex flex-col mt-[22px] mr-[105px] mb-[80px] ml-[105px]">

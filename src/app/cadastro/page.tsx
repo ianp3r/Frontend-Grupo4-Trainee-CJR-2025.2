@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import mascote from '@/assets/mascote.png'
 import logo from '@/assets/logo.svg'
-import { FormEvent } from 'react'
 
 const TelaDeCadastro = () => {
     const router = useRouter()

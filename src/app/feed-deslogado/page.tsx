@@ -68,7 +68,7 @@ interface BackendLoja {
 }
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductDisplay;
 }
 
 type TagColor = 'purple' | 'green' | 'pink';

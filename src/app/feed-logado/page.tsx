@@ -191,7 +191,7 @@ const CategoryList = () => (
     </section>
 );
 
-const ProductCard = ({ product }: { product: Product }) => (
+const ProductCard = ({ product }: { product: ProductDisplay }) => (
     <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full">
         <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
             <Image

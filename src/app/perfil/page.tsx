@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { UserAPI } from "@/services/api";
-import { UserWithStores, Product, Store } from "@/types";
+import { UserWithStores, Product } from "@/types";
 import { ArrowRight, Plus, Store as StoreIcon } from 'lucide-react'; 
 import arrow from '@/assets/arrow.svg';
 import email from '@/assets/email.svg';
@@ -12,13 +12,12 @@ import userimage from '@/assets/userimage.avif'
 import cover from '@/assets/cover.svg';
 
 // Mocking FilterMenu and staticCategories for completeness since they are used in StoreList
-const FilterMenu = ({ categories }: { categories: string[] }) => (
+const FilterMenu = () => (
     <div className="text-sm text-gray-500">
         {/* Placeholder for filtering logic */}
         Filtros
     </div>
 );
-const staticCategories = ["Vestuário", "Eletrônicos", "Alimentos"];
 
 
 const Perfil = () => {
@@ -146,7 +145,7 @@ const Perfil = () => {
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-semibold text-gray-900">Minhas Lojas</h3>
                 <div className="flex gap-4">
-                    <FilterMenu categories={staticCategories} />
+                    <FilterMenu />
                     <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
                         ver mais
                         <ArrowRight className="h-4 w-4" />
@@ -166,11 +165,11 @@ const Perfil = () => {
                             className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
                         >
                             <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
-                                {store.logo || store.name.substring(0, 2)} 
+                                {store.logo_url || store.nome.substring(0, 2)} 
                             </div>
                             <div className="text-center">
                                 <span className="break-keep text-sm font-semibold text-gray-800 display-block">
-                                    {store.name}
+                                    {store.nome}
                                 </span>
                             </div>
                         </a>

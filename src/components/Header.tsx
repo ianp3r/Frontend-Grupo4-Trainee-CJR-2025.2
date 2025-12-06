@@ -12,7 +12,7 @@ import person_active from '@/assets/person_active.svg';
 import person from '@/assets/person.svg';
 
 const Header = () => {
-    const { isAuthenticated, logout } = useAuth();
+    const { isAuthenticated, logout, user } = useAuth();
 
     return (
         <header className='w-full h-[92px] bg-black flex items-center text-white'>
@@ -40,7 +40,7 @@ const Header = () => {
                     // Logged In 
                     <ul className='flex gap-[30px] items-center'>
                         <li className='w-[36px] h-[36px]'>
-                            <Link href='/perfil'>
+                            <Link href={`/perfil/${user?.username || ''}`}>
                                 <Image src={person_active} alt='perfil' className='cursor-pointer'/>
                             </Link>
                         </li>

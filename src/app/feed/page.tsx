@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import mascote from '@/assets/mascote_01.png';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import {
   ShoppingCart,
   User,
@@ -448,12 +449,7 @@ export default function Page() {
 
         <StoreList categories={categories} stores={stores} />
       </main>
-      
-      <footer className="bg-purple-800 text-purple-300 p-8 mt-12">
-        <div className="container mx-auto max-w-7xl text-center">
-          <p>&copy; {new Date().getFullYear()} Grupo 4 Ciclopes</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

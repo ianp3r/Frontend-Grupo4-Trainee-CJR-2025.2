@@ -12,6 +12,8 @@ import editar_icone from '@/assets/editar-icone.svg';
 import profilePicture from '@/assets/userimage.avif';
 import avaliacoes from '@/assets/avaliacoes.svg';
 import Paginador from "@/components/Paginador";
+import Footer from "@/components/Footer";
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -190,31 +192,43 @@ const Loja = () => {
                     <div className="flex gap-[32px] overflow-x-auto mt-[42px] pb-4">
                         {topProducts.length > 0 ? (
                             topProducts.map(item => (
-                                <div key={item.id} className="w-[228.67px] h-[310px] rounded-[12.81px] bg-white flex flex-col list-none shrink-0 shadow-md hover:shadow-lg transition-shadow">
-                                    {item.imagens && item.imagens.length > 0 ? (
-                                        <Image 
-                                            className="self-center w-[190.24px] h-[190.24px] object-cover rounded-t-[12.81px] mt-4" 
-                                            src={item.imagens[0].url_imagem} 
-                                            alt={item.nome}
-                                            width={190}
-                                            height={190}
-                                        />
-                                    ) : (
-                                        <div className="self-center w-[190.24px] h-[190.24px] bg-gray-200 flex items-center justify-center rounded-t-[12.81px] mt-4">
-                                            <span className="text-gray-500 text-sm">Sem imagem</span>
+                                <Link key={item.id} href={`/produto/${item.id}`} className="block w-60 flex-shrink-0">
+                                    <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full cursor-pointer">
+                                        <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
+                                            {item.imagens && item.imagens.length > 0 ? (
+                                                <img
+                                                    src={item.imagens[0].url_imagem}
+                                                    alt={item.nome}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = 'https://placehold.co/300x300/EFEFEF/333?text=Produto';
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-gray-300">
+                                                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                                    </svg>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                    <div className="flex flex-col px-[22px] py-[12px] leading-[1] gap-[8px]">
-                                        <span className="font-[League_Spartan] font-medium text-[26.65px] text-black truncate">{item.nome}</span>
-                                        <span className="font-[League_Spartan] font-medium text-[23.02px] text-black">R${formatPrice(item.preco)}</span>
-                                        <span 
-                                            className="font-[League_Spartan] font-medium text-[13.86px]"
-                                            style={{ color: getStockStatusColor(item.estoque) }}
-                                        >
-                                            {getStockStatus(item.estoque)}
-                                        </span>
+                                        <div className="p-3">
+                                            <h4 className="font-semibold text-sm text-gray-800 truncate">{item.nome}</h4>
+                                            <p className="font-bold text-gray-900 mt-1">R${formatPrice(item.preco)}</p>
+                                            {item.estoque > 0 ? (
+                                                <span className="flex items-center text-xs text-green-600 mt-2">
+                                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                                    DISPONÍVEL
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center text-xs text-red-500 mt-2">
+                                                    <XCircle className="h-3 w-3 mr-1" />
+                                                    INDISPONÍVEL
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                             ))
                         ) : (
                             <div className="w-full text-center py-8">
@@ -249,8 +263,9 @@ const Loja = () => {
                     )}
                 </div>
             </div>
+            <Footer />
         </div>
-    )
+    );
 };
 
 export default Loja;

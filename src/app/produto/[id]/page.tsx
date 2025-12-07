@@ -1,10 +1,14 @@
-import { Star } from 'lucide-react';
+'use client';
+
+import { Star, CheckCircle2, XCircle } from 'lucide-react';
 import Header from '@/components/Header';
-import { notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import profilePicture from '@/assets/userimage.avif';
+import Footer from '@/components/Footer';
 import type { ProductReview } from '@/types';
+import { useEffect, useState } from 'react';
 
 interface ProductImage {
   id: number;
@@ -57,70 +61,76 @@ const formatTimeAgo = (dateString: string): string => {
   return `${diffDays}d`;
 };
 
-async function getProduct(id: string): Promise<Product | null> {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const res = await fetch(`${apiUrl}/produto/${id}`, {
-      cache: 'no-store', // Disable caching for fresh data
-    });
+export default function ProductPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [store, setStore] = useState<StoreSummary | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    if (!res.ok) {
-      return null;
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
 
-    return res.json();
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return null;
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        
+        // Fetch product
+        const productRes = await fetch(`${apiUrl}/produto/${id}`, { cache: 'no-store' });
+        if (!productRes.ok) {
+          setLoading(false);
+          return;
+        }
+        const productData = await productRes.json();
+        setProduct(productData);
+
+        // Fetch reviews and store in parallel
+        const [reviewsRes, storeRes] = await Promise.all([
+          fetch(`${apiUrl}/product-reviews?produtoId=${id}`, { cache: 'no-store' }),
+          fetch(`${apiUrl}/loja/${productData.lojaId}`, { cache: 'no-store' })
+        ]);
+
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          setReviews(reviewsData);
+        }
+
+        if (storeRes.ok) {
+          const storeData = await storeRes.json();
+          setStore(storeData);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex items-center justify-center">
+          <p className="text-2xl">Carregando produto...</p>
+        </main>
+      </div>
+    );
   }
-}
-
-async function getProductReviews(id: string): Promise<ProductReview[]> {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const res = await fetch(`${apiUrl}/product-reviews?produtoId=${id}`, {
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      return [];
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Error fetching product reviews:', error);
-    return [];
-  }
-}
-
-async function getStore(lojaId: number): Promise<StoreSummary | null> {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    const res = await fetch(`${apiUrl}/loja/${lojaId}`, { cache: 'no-store' });
-
-    if (!res.ok) {
-      return null;
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error('Error fetching store:', error);
-    return null;
-  }
-}
-
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = await getProduct(id);
 
   if (!product) {
-    notFound();
+    return (
+      <div className="min-h-screen bg-cream">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex items-center justify-center">
+          <p className="text-2xl text-red-600">Produto não encontrado</p>
+        </main>
+      </div>
+    );
   }
-
-  const [reviews, store] = await Promise.all([
-    getProductReviews(id),
-    getStore(product.lojaId),
-  ]);
 
   const images = product.images || [];
   const hasImages = images.length > 0;
@@ -272,23 +282,43 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   <Link
                     key={item.id}
                     href={`/produto/${item.id}`}
-                    className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition block"
+                    className="block"
                   >
-                    <div className="h-40 bg-gray-100 rounded-xl mb-4 relative flex items-center justify-center overflow-hidden">
-                      {imageUrl ? (
-                        <Image
-                          src={imageUrl}
-                          alt={item.nome}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <span className="text-gray-500 text-sm">Sem imagem</span>
-                      )}
+                    <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full cursor-pointer">
+                      <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={item.nome}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://placehold.co/300x300/EFEFEF/333?text=Produto';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-gray-300">
+                              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-sm text-gray-800 truncate">{item.nome}</h4>
+                        <p className="font-bold text-gray-900 mt-1">R${(item.preco / 100).toFixed(2).replace('.', ',')}</p>
+                        {item.estoque > 0 ? (
+                          <span className="flex items-center text-xs text-green-600 mt-2">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            DISPONÍVEL
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-xs text-red-500 mt-2">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            INDISPONÍVEL
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="font-bold text-lg text-black font-[League_Spartan] truncate">{item.nome}</p>
-                    <p className="text-sm text-gray-700 font-[League_Spartan]">R${(item.preco / 100).toFixed(2).replace('.', ',')}</p>
-                    <p className="text-xs text-gray-500 font-[League_Spartan]">{item.estoque} disponíveis</p>
                   </Link>
                 );
               })}
@@ -299,6 +329,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
 
       </main>
+      <Footer />
     </div>
   );
 }

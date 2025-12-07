@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Star, Send, Plus } from "lucide-react"; 
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import Modal from "@/components/Modal";
 import CriarAvaliacao from "@/components/CriarAvaliacao";
 import { StoreReviewAPI, CommentAPI } from "@/services/api";
@@ -346,6 +347,7 @@ export default function AvaliacoesLojaPage() {
           />
         </Modal>
       )}
+      <Footer />
     </div>
   );
 }

@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Image, { StaticImageData } from "next/image";
+import Link from "next/link";
 import arrow_left from '@/assets/arrow-left.svg';
 import arrow_right from '@/assets/arrow-right.svg';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 type Produto = {
     id: number;
@@ -42,14 +44,39 @@ const Paginador = ({ produtos }: PropsPaginador) => {
             <div className="grid grid-cols-5 grid-rows-3 gap-[17px]">
                 {
                     itensPagina.map(item => (
-                        <div key={item.id} className="w-[228.67px] h-[310px] rounded-[12.81px] bg-white flex flex-col">
-                            <Image className="self-center w-[190.24px] h-[190.24px]" src={item.image} alt={item.alt}/>
-                            <div className="flex flex-col px-[22px] leading-[1] gap-[8px]">
-                                <span className="font-[League_Spartan] font-medium text-[26.65px] text-black">{item.nome}</span>
-                                <span className="font-[League_Spartan] font-medium text-[23.02px] text-black">R${item.preco}</span>
-                                <span className="font-[League_Spartan] font-medium text-[13.86px] text-[#C6E700]">{item.estoque}</span>
+                        <Link key={item.id} href={`/produto/${item.id}`} className="block">
+                            <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full cursor-pointer">
+                                <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
+                                    {typeof item.image === 'string' ? (
+                                        <img
+                                            src={item.image}
+                                            alt={item.alt}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = 'https://placehold.co/300x300/EFEFEF/333?text=Produto';
+                                            }}
+                                        />
+                                    ) : (
+                                        <Image src={item.image} alt={item.alt} width={190} height={190} className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                                <div className="p-3">
+                                    <h4 className="font-semibold text-sm text-gray-800 truncate">{item.nome}</h4>
+                                    <p className="font-bold text-gray-900 mt-1">R${item.preco}</p>
+                                    {item.estoque.toLowerCase() === 'disponível' ? (
+                                        <span className="flex items-center text-xs text-green-600 mt-2">
+                                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                                            DISPONÍVEL
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center text-xs text-red-500 mt-2">
+                                            <XCircle className="h-3 w-3 mr-1" />
+                                            INDISPONÍVEL
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        </Link>
                     ))
                 }
             </div>

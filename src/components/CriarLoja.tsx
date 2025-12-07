@@ -6,6 +6,7 @@ import { StoreAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import icone_loja from '@/assets/icone-loja.svg';
 import UploadBox from "./UploadBox";
+import { fileToBase64, isValidImage, isValidImageSize } from "@/utils/imageUpload";
 
 interface Loja {
     nome: string;
@@ -71,17 +72,54 @@ const CriarLoja = ({ onClose, onSuccess }: Props) => {
         setError(null);
 
         try {
-            // TODO: Upload images to cloud storage and get URLs
-            // For now, we'll use placeholder URLs or skip them
-            const storeData = {
+            const storeData: any = {
                 nome: loja.nome,
                 descricao: loja.descricao || undefined,
                 usuarioId: user.id,
-                // Add URLs when image upload is implemented
-                // logo_url: uploadedLogoUrl,
-                // banner_url: uploadedBannerUrl,
-                // sticker_url: uploadedStickerUrl,
             };
+
+            // Convert images to Base64 if provided
+            if (loja.imagens.imagem) {
+                if (!isValidImage(loja.imagens.imagem)) {
+                    setError('Foto de perfil: formato inválido');
+                    setLoading(false);
+                    return;
+                }
+                if (!isValidImageSize(loja.imagens.imagem)) {
+                    setError('Foto de perfil: máximo 5MB');
+                    setLoading(false);
+                    return;
+                }
+                storeData.logo_url = await fileToBase64(loja.imagens.imagem);
+            }
+
+            if (loja.imagens.imagem_svg) {
+                if (!isValidImage(loja.imagens.imagem_svg)) {
+                    setError('Sticker: formato inválido');
+                    setLoading(false);
+                    return;
+                }
+                if (!isValidImageSize(loja.imagens.imagem_svg)) {
+                    setError('Sticker: máximo 5MB');
+                    setLoading(false);
+                    return;
+                }
+                storeData.sticker_url = await fileToBase64(loja.imagens.imagem_svg);
+            }
+
+            if (loja.imagens.banner) {
+                if (!isValidImage(loja.imagens.banner)) {
+                    setError('Banner: formato inválido');
+                    setLoading(false);
+                    return;
+                }
+                if (!isValidImageSize(loja.imagens.banner)) {
+                    setError('Banner: máximo 5MB');
+                    setLoading(false);
+                    return;
+                }
+                storeData.banner_url = await fileToBase64(loja.imagens.banner);
+            }
 
             await StoreAPI.createStore(storeData);
             
@@ -150,7 +188,7 @@ const CriarLoja = ({ onClose, onSuccess }: Props) => {
                     <UploadBox
                         id="img-svg-loja"
                         icon={icone_loja}
-                        label="Anexe a logo em SVG da loja"
+                        label="Anexe o logo/sticker da loja"
                         file={loja.imagens.imagem_svg}
                         onChange={(file) => updateImagem("imagem_svg", file)}
                     />
@@ -161,7 +199,6 @@ const CriarLoja = ({ onClose, onSuccess }: Props) => {
                         file={loja.imagens.banner}
                         onChange={(file) => updateImagem("banner", file)}
                     />
-
                 </div>
                 <button
                     type="submit"

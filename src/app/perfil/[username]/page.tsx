@@ -169,8 +169,20 @@ const Perfil = () => {
                             href={`/loja?id=${store.id}`}
                             className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
                         >
-                            <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
-                                {store.logo_url || store.nome.substring(0, 2)} 
+                            <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
+                                {store.logo_url || store.sticker_url ? (
+                                    <img 
+                                        src={store.logo_url || store.sticker_url} 
+                                        alt={store.nome}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            e.currentTarget.parentElement!.innerText = store.nome.substring(0, 2).toUpperCase();
+                                        }}
+                                    />
+                                ) : (
+                                    store.nome.substring(0, 2).toUpperCase()
+                                )}
                             </div>
                             <div className="text-center">
                                 <span className="break-keep text-sm font-semibold text-gray-800 display-block">
@@ -278,10 +290,10 @@ const Perfil = () => {
                     <div className="flex gap-[32px] overflow-x-auto mt-[42px] pb-8">
                         {userProducts.map(product => (
                             <div key={product.id} className="w-[228.67px] h-[310px] rounded-[12.81px] bg-white flex flex-col list-none shrink-0 shadow-md hover:shadow-lg transition-shadow duration-300">
-                                {product.imagens && product.imagens.length > 0 ? (
+                                {product.imagens && product.imagens.length > 0 && product.imagens[0].url ? (
                                     <Image 
                                         className="self-center w-[190.24px] h-[190.24px] object-cover rounded-t-[12.81px] mt-4" 
-                                        src={product.imagens[0].url_imagem} 
+                                        src={product.imagens[0].url} 
                                         alt={product.nome}
                                         width={190}
                                         height={190}

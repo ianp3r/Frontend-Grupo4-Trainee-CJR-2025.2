@@ -51,7 +51,7 @@ const EditarPerfil = ({ onClose, dados, onUpdate }: Props) => {
         try {
             // TODO: Upload foto to cloud storage and get URL
             // For now, we'll skip the image upload
-            const updateData: any = {
+            const updateData: Pick<Perfil, 'nome' | 'username' | 'email'> = {
                 nome: perfil.nome,
                 username: perfil.username,
                 email: perfil.email,

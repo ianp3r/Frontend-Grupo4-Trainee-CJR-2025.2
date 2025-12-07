@@ -1,17 +1,23 @@
 'use client'
 
 import camera_icone from "@/assets/camera.svg";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import UploadBox from "@/components/UploadBox";
 import Select from "@/components/Select";
 import menos from "@/assets/menos.svg";
 import mais from "@/assets/mais.svg";
+import { fileToBase64, isValidImage, isValidImageSize } from "@/utils/imageUpload";
+
+interface Category {
+	id: number;
+	nome: string;
+}
 
 interface Produto {
 	nome: string
 	descricao: string
-	subcategoria: string
+	categoriaId: number | null
 	preco: string
 	quantidade: number
 	imagens: {
@@ -23,19 +29,53 @@ interface Produto {
 }
 
 interface Props {
-    data: Produto;
+	productId: number;
 	onClose: () => void;
+	onSuccess?: () => void;
 }
 
-const EditarProduto = ({ onClose, data }: Props) => {
+const EditarProduto = ({ onClose, productId, onSuccess }: Props) => {
 	const [produto, setProduto] = useState<Produto>({
-		nome: data.nome,
-		descricao: data.descricao,
-		subcategoria: data.subcategoria,
-		preco: data.preco,
-		quantidade: data.quantidade,
-		imagens: { principal: data.imagens.principal, extra1: data.imagens.extra1, extra2: data.imagens.extra2, extra3: data.imagens.extra3 }
+		nome: '',
+		descricao: '',
+		categoriaId: null,
+		preco: '',
+		quantidade: 0,
+		imagens: { principal: null, extra1: null, extra2: null, extra3: null }
 	});
+	const [categories, setCategories] = useState<Category[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+				
+				// Fetch categories
+				const categoriesResponse = await fetch(`${API_URL}/categories`);
+				const categoriesData = await categoriesResponse.json();
+				setCategories(categoriesData);
+
+				// Fetch product data
+				const productResponse = await fetch(`${API_URL}/produto/${productId}`);
+				if (!productResponse.ok) throw new Error('Erro ao carregar produto');
+				const productData = await productResponse.json();
+
+				setProduto({
+					nome: productData.nome,
+					descricao: productData.descricao || '',
+					categoriaId: productData.categoriaId,
+					preco: (productData.preco / 100).toFixed(2).replace('.', ','),
+					quantidade: productData.estoque,
+					imagens: { principal: null, extra1: null, extra2: null, extra3: null }
+				});
+			} catch (err) {
+				setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
+			}
+		};
+		fetchData();
+	}, [productId]);
 
 	const updateImagem = (key: keyof typeof produto.imagens, file: File | null) => {
 		setProduto(prev => ({
@@ -44,22 +84,136 @@ const EditarProduto = ({ onClose, data }: Props) => {
 		}));
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
-        onClose()
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log(produto);
+		setLoading(true);
+		setError(null);
+
+		try {
+			const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+			const token = localStorage.getItem('authToken');
+
+			const precoEmCentavos = Math.round(parseFloat(produto.preco.replace(',', '.')) * 100);
+
+			const updateData: any = {
+				nome: produto.nome,
+				descricao: produto.descricao,
+				categoriaId: produto.categoriaId,
+				preco: precoEmCentavos,
+				estoque: produto.quantidade,
+			};
+
+			// Validate and convert images to Base64
+			const imagesToUpload: { key: string; file: File }[] = [];
+			if (produto.imagens.principal) imagesToUpload.push({ key: 'principal', file: produto.imagens.principal });
+			if (produto.imagens.extra1) imagesToUpload.push({ key: 'extra1', file: produto.imagens.extra1 });
+			if (produto.imagens.extra2) imagesToUpload.push({ key: 'extra2', file: produto.imagens.extra2 });
+			if (produto.imagens.extra3) imagesToUpload.push({ key: 'extra3', file: produto.imagens.extra3 });
+
+			for (const { key, file } of imagesToUpload) {
+				if (!isValidImage(file)) {
+					setError(`Imagem ${key}: Por favor, selecione uma imagem válida (JPEG, PNG, GIF, WebP ou SVG)`);
+					setLoading(false);
+					return;
+				}
+				if (!isValidImageSize(file)) {
+					setError(`Imagem ${key}: A imagem deve ter no máximo 5MB`);
+					setLoading(false);
+					return;
+				}
+			}
+
+			// Convert images to base64 if provided
+			const imagensBase64: string[] = [];
+			for (const { file } of imagesToUpload) {
+				const base64 = await fileToBase64(file);
+				imagensBase64.push(base64);
+			}
+
+			const response = await fetch(`${API_URL}/produto/${productId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					...(token && { 'Authorization': `Bearer ${token}` }),
+				},
+				body: JSON.stringify(updateData),
+			});
+
+			if (!response.ok) {
+				throw new Error('Erro ao atualizar produto');
+			}
+
+			// Upload new images if any (after product is updated)
+			if (imagensBase64.length > 0) {
+				for (const base64Image of imagensBase64) {
+					try {
+						await fetch(`${API_URL}/product-images`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								...(token && { 'Authorization': `Bearer ${token}` }),
+							},
+							body: JSON.stringify({
+								productId: productId,
+								url: base64Image,
+							}),
+						});
+					} catch (imgError) {
+						console.error('Erro ao fazer upload de imagem:', imgError);
+						// Continue even if image upload fails
+					}
+				}
+			}
+
+			if (onSuccess) onSuccess();
+			onClose();
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Erro ao atualizar produto');
+		} finally {
+			setLoading(false);
+		}
 	};
 
-    const handleDelete = () => {
-        console.log("Produto deletado:", produto);
-        onClose(); 
-    };
+	const handleDelete = async () => {
+		if (!confirm('Tem certeza que deseja deletar este produto?')) return;
+
+		setLoading(true);
+		try {
+			const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+			const token = localStorage.getItem('authToken');
+
+			const response = await fetch(`${API_URL}/produto/${productId}`, {
+				method: 'DELETE',
+				headers: {
+					...(token && { 'Authorization': `Bearer ${token}` }),
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error('Erro ao deletar produto');
+			}
+
+			if (onSuccess) onSuccess();
+			onClose();
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Erro ao deletar produto');
+		} finally {
+			setLoading(false);
+		}
+	};
     
+	const selectedCategory = categories.find(cat => cat.id === produto.categoriaId);
+
 	return (
 		<div>
 			<h1 className="font-normal text-[52.56px] text-black text-center">
-				Adicionar Produto
+				Editar Produto
 			</h1>
+			{error && (
+				<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+					{error}
+				</div>
+			)}
 			<form 
 				className="flex flex-col items-center"
 				onSubmit={handleSubmit}
@@ -102,12 +256,16 @@ const EditarProduto = ({ onClose, data }: Props) => {
 					value={produto.nome}
 					onChange={(e) => setProduto(prev => ({ ...prev, nome: e.target.value }))}
 					className="w-full h-[65px] mt-[30px] rounded-[99px] bg-white font-light text-[25px] text-[#00000082] p-6 resize-none"
+					required
 				/>
 				<Select 
-					opcoes={['Doce', 'Salgado']} 
-					nome="Subcategoria" 
-                    valorInicial={produto.subcategoria}
-					onSelect={(item) => setProduto(prev => ({ ...prev, subcategoria: item }))} 
+					opcoes={categories.map(cat => cat.nome)} 
+					nome="Categoria" 
+					valorInicial={selectedCategory?.nome}
+					onSelect={(item) => {
+						const category = categories.find(cat => cat.nome === item);
+						setProduto(prev => ({ ...prev, categoriaId: category?.id || null }));
+					}} 
 				/>
 				<textarea
 					placeholder="Descrição"
@@ -117,10 +275,11 @@ const EditarProduto = ({ onClose, data }: Props) => {
 				/>
 				<input
 					type="text"
-					placeholder="Preço"
-					value={`R$ ${produto.preco}`}
+					placeholder="Preço (ex: 29,90)"
+					value={produto.preco}
 					onChange={(e) => setProduto(prev => ({ ...prev, preco: e.target.value }))}
 					className="w-full h-[65px] mt-[30px] rounded-[99px] bg-white font-light text-[25px] text-[#00000082] p-6 resize-none"
+					required
 				/>
 				<div className="flex gap-[50px] items-center justify-center mt-[30px]">
 					<button 
@@ -143,15 +302,17 @@ const EditarProduto = ({ onClose, data }: Props) => {
                 <button
                     onClick={handleDelete}
                     type="button"
-                    className="w-[373px] h-[50px] rounded-[83px] mt-[30px] bg-[#FF0000] text-[white] font-[League_Spartan] text-[25px]"
+					disabled={loading}
+                    className="w-[373px] h-[50px] rounded-[83px] mt-[30px] bg-[#FF0000] text-[white] font-[League_Spartan] text-[25px] disabled:opacity-50"
                 >
-                    DELETAR
+                    {loading ? 'Deletando...' : 'DELETAR'}
                 </button>
 				<button
 					type="submit"
-					className="w-[373px] h-[50px] rounded-[83px] mt-[30px] mb-[40px] bg-[#6A38F3] font-normal text-[25px] text-white text-center align-middle"
+					disabled={loading}
+					className="w-[373px] h-[50px] rounded-[83px] mt-[30px] mb-[40px] bg-[#6A38F3] font-normal text-[25px] text-white text-center align-middle disabled:opacity-50"
 				>
-					Adicionar
+					{loading ? 'Salvando...' : 'Salvar'}
 				</button>
 			</form>
 		</div>

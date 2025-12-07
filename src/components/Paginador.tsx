@@ -47,7 +47,7 @@ const Paginador = ({ produtos }: PropsPaginador) => {
                         <Link key={item.id} href={`/produto/${item.id}`} className="block">
                             <div className="border rounded-lg overflow-hidden shadow-sm bg-white transition-shadow hover:shadow-md h-full cursor-pointer">
                                 <div className="w-full h-40 bg-gray-50 flex items-center justify-center overflow-hidden">
-                                    {typeof item.image === 'string' ? (
+                                    {typeof item.image === 'string' && item.image ? (
                                         <img
                                             src={item.image}
                                             alt={item.alt}
@@ -56,8 +56,14 @@ const Paginador = ({ produtos }: PropsPaginador) => {
                                                 e.currentTarget.src = 'https://placehold.co/300x300/EFEFEF/333?text=Produto';
                                             }}
                                         />
-                                    ) : (
+                                    ) : item.image && typeof item.image !== 'string' ? (
                                         <Image src={item.image} alt={item.alt} width={190} height={190} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-gray-300">
+                                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                            </svg>
+                                        </div>
                                     )}
                                 </div>
                                 <div className="p-3">

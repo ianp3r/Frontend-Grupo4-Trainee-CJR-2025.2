@@ -1,6 +1,6 @@
 'use client';
 
-import { Star, CheckCircle2, XCircle } from 'lucide-react';
+import { Star, CheckCircle2, XCircle, Edit } from 'lucide-react';
 import Header from '@/components/Header';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -9,12 +9,13 @@ import profilePicture from '@/assets/userimage.avif';
 import Footer from '@/components/Footer';
 import type { ProductReview } from '@/types';
 import { useEffect, useState } from 'react';
+import Modal from '@/components/Modal';
+import EditarProduto from '@/components/EditarProduto';
 
 interface ProductImage {
   id: number;
-  productId: number;
+  produtoId: number;
   url: string;
-  alt_text?: string;
 }
 
 interface Product {
@@ -27,11 +28,11 @@ interface Product {
   estoque: number;
   createdAt?: string;
   updatedAt?: string;
-  images?: ProductImage[];
+  imagens?: ProductImage[];
 }
 
 interface StoreProductImage {
-  url_imagem: string;
+  url: string;
 }
 
 interface StoreProduct {
@@ -68,47 +69,73 @@ export default function ProductPage() {
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [store, setStore] = useState<StoreSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [showEditarProduto, setShowEditarProduto] = useState(false);
+
+  const fetchData = async () => {
+    if (!id) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      
+      // Get current user ID from JWT token
+      const token = localStorage.getItem('authToken');
+      let userId = null;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userId = payload.sub || payload.id || payload.userId;
+          setCurrentUserId(userId);
+        } catch (err) {
+          console.error('Error decoding token:', err);
+        }
+      }
+      
+      // Fetch product
+      const productRes = await fetch(`${apiUrl}/produto/${id}`, { cache: 'no-store' });
+      if (!productRes.ok) {
+        setLoading(false);
+        return;
+      }
+      const productData = await productRes.json();
+      setProduct(productData);
+
+      // Fetch reviews and store in parallel
+      const [reviewsRes, storeRes] = await Promise.all([
+        fetch(`${apiUrl}/product-reviews?produtoId=${id}`, { cache: 'no-store' }),
+        fetch(`${apiUrl}/loja/${productData.lojaId}`, { cache: 'no-store' })
+      ]);
+
+      if (reviewsRes.ok) {
+        const reviewsData = await reviewsRes.json();
+        setReviews(reviewsData);
+      }
+
+      if (storeRes.ok) {
+        const storeData = await storeRes.json();
+        setStore(storeData);
+        
+        // Check if current user is the store owner
+        if (userId && storeData.usuarioId === userId) {
+          setIsOwner(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        
-        // Fetch product
-        const productRes = await fetch(`${apiUrl}/produto/${id}`, { cache: 'no-store' });
-        if (!productRes.ok) {
-          setLoading(false);
-          return;
-        }
-        const productData = await productRes.json();
-        setProduct(productData);
-
-        // Fetch reviews and store in parallel
-        const [reviewsRes, storeRes] = await Promise.all([
-          fetch(`${apiUrl}/product-reviews?produtoId=${id}`, { cache: 'no-store' }),
-          fetch(`${apiUrl}/loja/${productData.lojaId}`, { cache: 'no-store' })
-        ]);
-
-        if (reviewsRes.ok) {
-          const reviewsData = await reviewsRes.json();
-          setReviews(reviewsData);
-        }
-
-        if (storeRes.ok) {
-          const storeData = await storeRes.json();
-          setStore(storeData);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [id]);
+
+  const handleRefreshProduct = () => {
+    setLoading(true);
+    fetchData();
+  };
 
   if (loading) {
     return (
@@ -132,7 +159,7 @@ export default function ProductPage() {
     );
   }
 
-  const images = product.images || [];
+  const images = product.imagens || [];
   const hasImages = images.length > 0;
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.nota, 0) / reviews.length
@@ -167,7 +194,7 @@ export default function ProductPage() {
                   >
                     <Image
                       src={image.url}
-                      alt={image.alt_text || product.nome}
+                      alt={product.nome}
                       fill
                       className="object-cover"
                     />
@@ -184,13 +211,17 @@ export default function ProductPage() {
               {hasImages ? (
                 <Image
                   src={images[0].url}
-                  alt={images[0].alt_text || product.nome}
+                  alt={product.nome}
                   fill
                   className="object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = '<div class="w-3/4 h-3/4 bg-purple-600 rounded-md shadow-xl flex items-center justify-center text-white text-2xl font-bold">Sem Imagem</div>';
+                  }}
                 />
               ) : (
                 <div className="w-3/4 h-3/4 bg-purple-600 rounded-md shadow-xl flex items-center justify-center text-white text-2xl font-bold">
-                  Product Image
+                  Sem Imagem
                 </div>
               )}
             </div>
@@ -199,7 +230,18 @@ export default function ProductPage() {
           {/* RIGHT COLUMN: INFO*/}
           <div className="w-full lg:max-w-lg space-y-6 font-sans">
             <div>
-              <h1 className="text-3xl font-medium text-black mb-2">{product.nome}</h1>
+              <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-medium text-black mb-2">{product.nome}</h1>
+                {isOwner && (
+                  <button
+                    onClick={() => setShowEditarProduto(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Editar
+                  </button>
+                )}
+              </div>
 
               {/* Rating Row */}
               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -277,7 +319,7 @@ export default function ProductPage() {
           {relatedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
               {relatedProducts.map((item) => {
-                const imageUrl = item.imagens && item.imagens.length > 0 ? item.imagens[0].url_imagem : null;
+                const imageUrl = item.imagens && item.imagens.length > 0 && item.imagens[0].url ? item.imagens[0].url : null;
                 return (
                   <Link
                     key={item.id}
@@ -330,6 +372,17 @@ export default function ProductPage() {
 
       </main>
       <Footer />
+
+      {/* Edit Product Modal */}
+      {isOwner && (
+        <Modal isOpen={showEditarProduto} onClose={() => setShowEditarProduto(false)}>
+          <EditarProduto 
+            productId={product.id} 
+            onClose={() => setShowEditarProduto(false)}
+            onSuccess={handleRefreshProduct}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

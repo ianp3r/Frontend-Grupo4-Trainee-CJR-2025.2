@@ -7,6 +7,7 @@ import UploadBox from "./UploadBox";
 import { UserAPI } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import camera from "@/assets/camera.svg";
+import { fileToBase64, isValidImage, isValidImageSize } from "@/utils/imageUpload";
 
 interface Perfil {
     nome: string;
@@ -49,13 +50,27 @@ const EditarPerfil = ({ onClose, dados, onUpdate }: Props) => {
         setError(null);
 
         try {
-            // TODO: Upload foto to cloud storage and get URL
-            // For now, we'll skip the image upload
-            const updateData: Pick<Perfil, 'nome' | 'username' | 'email'> = {
+            const updateData: any = {
                 nome: perfil.nome,
                 username: perfil.username,
                 email: perfil.email,
             };
+
+            // Convert photo to Base64 if a new file was selected
+            if (perfil.foto) {
+                if (!isValidImage(perfil.foto)) {
+                    setError('Por favor, selecione uma imagem válida (JPEG, PNG, GIF, WebP ou SVG)');
+                    setLoading(false);
+                    return;
+                }
+                if (!isValidImageSize(perfil.foto)) {
+                    setError('A imagem deve ter no máximo 5MB');
+                    setLoading(false);
+                    return;
+                }
+                const base64Image = await fileToBase64(perfil.foto);
+                updateData.foto_perfil_url = base64Image;
+            }
 
             await UserAPI.updateUser(user.id, updateData);
             

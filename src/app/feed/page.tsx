@@ -24,6 +24,21 @@ import {
   Home,
   XCircle,
   CheckCircle2,
+  Book,
+  Dumbbell,
+  Apple,
+  Coffee,
+  Wrench,
+  Car,
+  Music,
+  Flower2,
+  Scissors,
+  Palette,
+  Watch,
+  Baby,
+  Dog,
+  Sparkles,
+  Utensils,
 } from 'lucide-react';
 
 import type { Icon as LucideIcon } from 'lucide-react';
@@ -46,6 +61,7 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 };
 
 interface Category {
+  id: number;
   name: string;
   icon: typeof LucideIcon;
   color: string;
@@ -77,6 +93,7 @@ interface ProductRowProps {
   tag: string;
   products: Product[];
   tagColor?: TagColor;
+  categoryId?: number;
 }
 
 // Helper function to get icon and color for a category
@@ -86,10 +103,27 @@ const getCategoryIconAndColor = (categoryName: string): { icon: typeof LucideIco
     'Farmácia': { icon: HeartPulse, color: 'text-blue-600' },
     'Bebidas': { icon: Wine, color: 'text-yellow-600' },
     'Moda': { icon: Shirt, color: 'text-pink-600' },
+    'Roupas': { icon: Shirt, color: 'text-pink-600' },
     'Eletrônicos': { icon: Laptop, color: 'text-indigo-600' },
     'Jogos': { icon: Gamepad2, color: 'text-red-600' },
     'Brinquedos': { icon: ToyBrick, color: 'text-purple-600' },
     'Casa': { icon: Home, color: 'text-orange-600' },
+    'Livros': { icon: Book, color: 'text-blue-700' },
+    'Esportes': { icon: Dumbbell, color: 'text-green-700' },
+    'Alimentos': { icon: Apple, color: 'text-red-500' },
+    'Alimentação': { icon: Utensils, color: 'text-orange-500' },
+    'Café': { icon: Coffee, color: 'text-amber-700' },
+    'Ferramentas': { icon: Wrench, color: 'text-gray-700' },
+    'Automotivo': { icon: Car, color: 'text-slate-600' },
+    'Música': { icon: Music, color: 'text-purple-500' },
+    'Jardim': { icon: Flower2, color: 'text-green-500' },
+    'Beleza': { icon: Sparkles, color: 'text-pink-500' },
+    'Cabelo': { icon: Scissors, color: 'text-rose-500' },
+    'Arte': { icon: Palette, color: 'text-violet-600' },
+    'Relógios': { icon: Watch, color: 'text-gray-800' },
+    'Bebê': { icon: Baby, color: 'text-blue-400' },
+    'Pet': { icon: Dog, color: 'text-amber-600' },
+    'Pets': { icon: Dog, color: 'text-amber-600' },
   };
   
   return categoryMap[categoryName] || { icon: ShoppingBag, color: 'text-gray-600' };
@@ -100,10 +134,27 @@ const categoryTagColors: Record<string, TagColor> = {
   'Farmácia': 'green',
   'Bebidas': 'purple',
   'Moda': 'pink',
+  'Roupas': 'pink',
   'Eletrônicos': 'purple',
   'Jogos': 'purple',
   'Brinquedos': 'pink',
   'Casa': 'green',
+  'Livros': 'purple',
+  'Esportes': 'green',
+  'Alimentos': 'green',
+  'Alimentação': 'green',
+  'Café': 'purple',
+  'Ferramentas': 'purple',
+  'Automotivo': 'purple',
+  'Música': 'pink',
+  'Jardim': 'green',
+  'Beleza': 'pink',
+  'Cabelo': 'pink',
+  'Arte': 'purple',
+  'Relógios': 'purple',
+  'Bebê': 'pink',
+  'Pet': 'green',
+  'Pets': 'green',
 };
 
 const Hero = () => (
@@ -138,9 +189,9 @@ const CategoryList = ({ categories }: { categories: Category[] }) => (
         {categories.map((category) => {
           const Icon = category.icon;
           return (
-            <a
-              key={category.name}
-              href="#"
+            <Link
+              key={category.id}
+              href={`/categoria/${category.id}`}
               className="flex flex-col items-center gap-2 w-24 flex-shrink-0 group"
             >
               <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
@@ -149,7 +200,7 @@ const CategoryList = ({ categories }: { categories: Category[] }) => (
               <span className="text-sm font-medium text-gray-700 text-center">
                 {category.name}
               </span>
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -199,7 +250,7 @@ const ProductCard = ({ product }: ProductCardProps) => (
   </Link>
 );
 
-const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowProps) => {
+const ProductRow = ({ title, tag, products, tagColor = 'purple', categoryId }: ProductRowProps) => {
   const colors: Record<TagColor, string> = {
     purple: 'bg-purple-100 text-purple-800',
     green: 'bg-green-100 text-green-800',
@@ -218,10 +269,12 @@ const ProductRow = ({ title, tag, products, tagColor = 'purple' }: ProductRowPro
             {tag}
           </span>
         </div>
-        <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
-          ver mais
-          <ArrowRight className="h-4 w-4" />
-        </a>
+        {categoryId && (
+          <Link href={`/categoria/${categoryId}`} className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
+            ver mais
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
       </div>
       
       <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
@@ -292,15 +345,6 @@ const StoreList = ({ categories, stores }: { categories: Category[]; stores: Sto
   <section className="container mx-auto p-4 max-w-7xl">
     <div className="flex justify-between items-center mb-4">
       <h3 className="text-2xl font-semibold text-gray-900">Lojas</h3>
-      <div className="flex gap-4">
-
-        <FilterMenu categories={categories} />
-        
-        <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1">
-          ver mais
-          <ArrowRight className="h-4 w-4" />
-        </a>
-      </div>
     </div>
 
     {stores.length > 0 ? (
@@ -311,8 +355,20 @@ const StoreList = ({ categories, stores }: { categories: Category[]; stores: Sto
             href={`/loja?id=${store.id}`}
             className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
           >
-            <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
-              {store.logo}
+            <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
+              {store.logo ? (
+                <img 
+                  src={store.logo} 
+                  alt={store.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerText = store.name.substring(0, 2).toUpperCase();
+                  }}
+                />
+              ) : (
+                store.name.substring(0, 2).toUpperCase()
+              )}
             </div>
             <div className="text-center">
               <span className="break-keep text-sm font-semibold text-gray-800 display-block">
@@ -331,7 +387,7 @@ const StoreList = ({ categories, stores }: { categories: Category[]; stores: Sto
 // conteudo principal
 
 export default function Page() {
-  const [productsByCategory, setProductsByCategory] = useState<Record<string, any[]>>({});
+  const [productsByCategory, setProductsByCategory] = useState<Record<string, { products: Product[], categoryId: number }>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
@@ -351,6 +407,7 @@ export default function Page() {
           .map((cat: any) => {
             const { icon, color } = getCategoryIconAndColor(cat.nome);
             return {
+              id: cat.id,
               name: cat.nome,
               icon,
               color,
@@ -364,23 +421,24 @@ export default function Page() {
         const productsArray = await response.json();
         
         // Group products by category
-        const transformedData: Record<string, Product[]> = {};
+        const transformedData: Record<string, { products: Product[], categoryId: number }> = {};
         
         // Ensure productsArray is an array
         if (Array.isArray(productsArray)) {
           productsArray.forEach((product: any) => {
             const categoryName = product.categoria?.nome || 'Sem Categoria';
+            const categoryId = product.categoria?.id || 0;
             
             if (!transformedData[categoryName]) {
-              transformedData[categoryName] = [];
+              transformedData[categoryName] = { products: [], categoryId };
             }
             
-            transformedData[categoryName].push({
+            transformedData[categoryName].products.push({
               id: product.id,
               name: product.nome,
               price: `R$${(product.preco / 100).toFixed(2).replace('.', ',')}`,
               available: product.estoque > 0,
-              imageUrl: product.imagens?.[0]?.url_imagem || 'https://placehold.co/300x300/EFEFEF/333?text=Produto',
+              imageUrl: product.imagens?.[0]?.url || 'https://placehold.co/300x300/EFEFEF/333?text=Produto',
             });
           });
         }
@@ -396,7 +454,7 @@ export default function Page() {
           id: store.id,
           name: store.nome,
           type: store.descricao || 'loja',
-          logo: store.nome.substring(0, 2).toUpperCase(), // Use first 2 letters as logo
+          logo: store.logo_url || store.sticker_url || '',
         }));
         
         setStores(transformedStores);
@@ -424,8 +482,8 @@ export default function Page() {
             </div>
           ) : (
             Object.keys(productsByCategory).length > 0 ? (
-              Object.entries(productsByCategory).map(([categoryName, products]) => {
-                if (products.length === 0) return null;
+              Object.entries(productsByCategory).map(([categoryName, categoryData]) => {
+                if (categoryData.products.length === 0) return null;
                 
                 const tagColor = categoryTagColors[categoryName] || 'purple';
                 
@@ -434,8 +492,9 @@ export default function Page() {
                     key={categoryName}
                     title="Produtos"
                     tag={`em ${categoryName}`}
-                    products={products}
+                    products={categoryData.products}
                     tagColor={tagColor}
+                    categoryId={categoryData.categoryId}
                   />
                 );
               })

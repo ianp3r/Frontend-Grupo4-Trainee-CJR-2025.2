@@ -30,13 +30,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Efeito para verificar o localStorage na inicialização
   useEffect(() => {
-    const storedToken = localStorage.getItem('token')
+    const storedToken = localStorage.getItem('authToken')
+    const storedUserData = localStorage.getItem('userData')
 
     if (storedToken) {
       setToken(storedToken)
-      // Aqui, o ideal seria validar o token com a API
-      // Por simplicidade do PT, vamos assumir que o token é válido
-      // e buscar/setar o usuário.
+      
+      if (storedUserData) {
+        try {
+          const parsedUser = JSON.parse(storedUserData)
+          setUser(parsedUser)
+        } catch (error) {
+          console.error('Error parsing user data:', error)
+          localStorage.removeItem('userData')
+        }
+      }
     }
     setIsLoading(false) // Termina a checagem
   }, [])
@@ -44,14 +52,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = (newToken: string, newUser: User) => {
     setToken(newToken)
     setUser(newUser)
-    localStorage.setItem('token', newToken)
+    localStorage.setItem('authToken', newToken)
+    localStorage.setItem('userData', JSON.stringify(newUser))
     router.push('/')
   }
 
   const logout = () => {
     setToken(null)
     setUser(null)
-    localStorage.removeItem('token')
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userData')
     router.push('/login')
   }
 

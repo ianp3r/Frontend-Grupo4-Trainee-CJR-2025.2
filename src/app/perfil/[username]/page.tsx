@@ -1,15 +1,18 @@
 'use client';
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
+import Modal from "@/components/Modal";
+import EditarPerfil from "@/components/EditarPerfil";
+import CriarLoja from "@/components/CriarLoja";
 import { UserAPI } from "@/services/api";
 import { UserWithStores, Product } from "@/types";
 import { ArrowRight, Plus, Store as StoreIcon } from 'lucide-react'; 
 import arrow from '@/assets/arrow.svg';
 import email from '@/assets/email.svg';
 import userimage from '@/assets/userimage.avif'
-import cover from '@/assets/cover.svg';
 
 // Mocking FilterMenu and staticCategories for completeness since they are used in StoreList
 const FilterMenu = () => (
@@ -26,6 +29,8 @@ const Perfil = () => {
     const [error, setError] = useState<string | null>(null);
     const [storesLoading, setStoresLoading] = useState(false);
     const [storesError, setStoresError] = useState<string | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
     
     // Helper function to decode JWT token and get user ID
     const getCurrentUserId = (): number | null => {
@@ -44,56 +49,56 @@ const Perfil = () => {
 
     const currentUserId = getCurrentUserId();
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                setError('Usuário não autenticado - sem token');
-                setLoading(false);
-                // window.location.href = '/login'; // Uncomment in production
-                return;
-            }
+    const fetchUserData = async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            setError('Usuário não autenticado - sem token');
+            setLoading(false);
+            // window.location.href = '/login'; // Uncomment in production
+            return;
+        }
 
-            if (!currentUserId) {
-                setError('Usuário não autenticado - token inválido');
-                setLoading(false);
+        if (!currentUserId) {
+            setError('Usuário não autenticado - token inválido');
+            setLoading(false);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            // window.location.href = '/login'; // Uncomment in production
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setStoresLoading(true);
+            
+            const [userInfo, storesData] = await Promise.all([
+                UserAPI.getUserById(currentUserId),
+                UserAPI.getUserWithStores(currentUserId)
+            ]);
+            
+            const userData: UserWithStores = {
+                ...userInfo,
+                lojas: Array.isArray(storesData) ? storesData : []
+            };
+            
+            setUser(userData);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error fetching user data';
+            setError(errorMessage);
+            setStoresError(errorMessage);
+            
+            if (err instanceof Error && (err.message.includes('Not Found') || err.message.includes('Unauthorized') || err.message.includes('401') || err.message.includes('403'))) {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('userData');
                 // window.location.href = '/login'; // Uncomment in production
-                return;
             }
+        } finally {
+            setLoading(false);
+            setStoresLoading(false);
+        }
+    };
 
-            try {
-                setLoading(true);
-                setStoresLoading(true);
-                
-                const [userInfo, storesData] = await Promise.all([
-                    UserAPI.getUserById(currentUserId),
-                    UserAPI.getUserWithStores(currentUserId)
-                ]);
-                
-                const userData: UserWithStores = {
-                    ...userInfo,
-                    lojas: Array.isArray(storesData) ? storesData : []
-                };
-                
-                setUser(userData);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'Error fetching user data';
-                setError(errorMessage);
-                setStoresError(errorMessage);
-                
-                if (err instanceof Error && (err.message.includes('Not Found') || err.message.includes('Unauthorized') || err.message.includes('401') || err.message.includes('403'))) {
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userData');
-                    // window.location.href = '/login'; // Uncomment in production
-                }
-            } finally {
-                setLoading(false);
-                setStoresLoading(false);
-            }
-        };
-
+    useEffect(() => {
         fetchUserData();
     }, [currentUserId]);
 
@@ -159,9 +164,9 @@ const Perfil = () => {
             {!storesLoading && !storesError && user.lojas.length > 0 ? (
                 <div className="flex gap-6 overflow-x-auto pb-4 -mx-4 px-4">
                     {user.lojas.map((store) => (
-                        <a
+                        <Link
                             key={store.id}
-                            href={`/stores/${store.id}`}
+                            href={`/loja?id=${store.id}`}
                             className="flex flex-col items-center gap-3 w-20 flex-shrink-0 group"
                         >
                             <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xl font-bold text-gray-600 group-hover:shadow-md transition-shadow">
@@ -172,7 +177,7 @@ const Perfil = () => {
                                     {store.nome}
                                 </span>
                             </div>
-                        </a>
+                        </Link>
                     ))}
                 </div>
             ) : (
@@ -188,7 +193,7 @@ const Perfil = () => {
                             Crie sua primeira loja e comece a vender seus produtos para milhares de clientes.
                         </p>
                         <button 
-                            onClick={() => window.location.href = '/create-store'} 
+                            onClick={() => setIsCreateStoreModalOpen(true)} 
                             className="inline-flex items-center gap-2 px-6 py-3 bg-[#6A38F3] text-white font-medium rounded-lg hover:bg-[#5B2FE8] transition-colors"
                         >
                             <Plus className="w-5 h-5" />
@@ -206,8 +211,10 @@ const Perfil = () => {
             {/* --- Profile Header Section (Adjusted for better flow) --- */}
             
             {/* 1. Cover Image: Give it a fixed height and keep it relative/flow */}
-            <div className="relative h-[300px] md:h-[350px] overflow-hidden">
-                <Image className="w-full h-auto object-cover" src={cover} alt="cover" layout="fill" />
+            <div 
+                className="relative h-[300px] md:h-[350px] overflow-hidden bg-cover bg-center"
+                style={{ backgroundImage: user.banner_url ? `url(${user.banner_url})` : "url('/banner.jpg')" }}
+            >
             </div>
 
             {/* 2. Profile Content: Use negative margin to overlap the cover image */}
@@ -243,13 +250,16 @@ const Perfil = () => {
                     {/* Buttons: Grouped together on the right side */}
                     <div className="flex flex-col gap-3 ml-auto mb-5"> 
                          {/* EDITAR PERFIL Button */}
-                        <button className="w-[324px] h-[43.22px] rounded-[266px] bg-[#6A38F3] font-inter font-normal text-[21.66px] text-white hover:bg-[#5B2FE8] transition-colors" 
-                            >Editar Perfil
+                        <button 
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="w-[324px] h-[43.22px] rounded-[266px] bg-[#6A38F3] font-inter font-normal text-[21.66px] text-white hover:bg-[#5B2FE8] transition-colors" 
+                        >
+                            Editar Perfil
                         </button>
                         
                         {/* CRIAR LOJA Button */}
                         <button 
-                            onClick={() => window.location.href = '/create-store'} 
+                            onClick={() => setIsCreateStoreModalOpen(true)} 
                             className="w-[324px] h-[43.22px] rounded-[266px] bg-[#6A38F3] font-inter font-normal text-[21.66px] text-white hover:bg-[#5B2FE8] transition-colors" 
                         >
                             Criar Loja
@@ -310,6 +320,32 @@ const Perfil = () => {
             <div className='w-full px-[115px]'>
                  <StoreList />
             </div>
+
+            {/* Edit Profile Modal */}
+            {isEditModalOpen && (
+                <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+                    <EditarPerfil 
+                        onClose={() => setIsEditModalOpen(false)}
+                        onUpdate={fetchUserData}
+                        dados={{
+                            nome: user.nome,
+                            username: user.username,
+                            email: user.email,
+                            foto: null
+                        }}
+                    />
+                </Modal>
+            )}
+
+            {/* Create Store Modal */}
+            {isCreateStoreModalOpen && (
+                <Modal isOpen={isCreateStoreModalOpen} onClose={() => setIsCreateStoreModalOpen(false)}>
+                    <CriarLoja 
+                        onClose={() => setIsCreateStoreModalOpen(false)} 
+                        onSuccess={fetchUserData}
+                    />
+                </Modal>
+            )}
         </main>
     );
 };

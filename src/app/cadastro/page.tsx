@@ -4,11 +4,13 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import mascote from '@/assets/mascote.png'
 import logo from '@/assets/logo.svg'
 
 const TelaDeCadastro = () => {
     const router = useRouter()
+    const { login } = useAuth()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -46,10 +48,8 @@ const TelaDeCadastro = () => {
             const data = await res.json()
             
             // Registration successful - auto login the user
-            if (data?.access_token) {
-                localStorage.setItem('authToken', data.access_token)
-                localStorage.setItem('userData', JSON.stringify(data.user))
-                router.push('/feed')
+            if (data?.access_token && data?.user) {
+                login(data.access_token, data.user)
             } else {
                 // No token returned, redirect to login
                 router.push('/login')

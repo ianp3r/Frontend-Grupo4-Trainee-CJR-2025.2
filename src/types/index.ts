@@ -51,3 +51,38 @@ export interface ProductImage {
 export interface UserWithStores extends User {
   lojas: Store[];
 }
+
+export interface ProductReview {
+  id: number;
+  usuarioId: number;
+  produtoId: number;
+  nota: number;
+  comentario: string | null;
+  createdAt: string;
+  updatedAt: string;
+  usuario?: User;
+  produto?: Product;
+}
+
+export interface Comment {
+  id: number;
+  usuarioId: number;
+  avaliacaoId: number | null;
+  avaliacaoProdutoId: number | null;
+  conteudo: string | null;
+  createdAt: string;
+  updatedAt: string;
+  usuario?: User;
+}
+
+export interface StoreReview {
+  id: number;
+  usuarioId: number;
+  lojaId: number;
+  nota: number;
+  comentario: string | null;
+  createdAt: string;
+  updatedAt: string;
+  usuario?: User;
+  loja?: Store;
+}
